@@ -5,16 +5,62 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Admin Panel - Birgittes Briks</title>
     <link rel="stylesheet" href="/css/style.css">
+    <style>
+        .admin-card {
+            background: white;
+            border-radius: 12px;
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+            transition: box-shadow 0.3s ease;
+        }
+        .admin-card:hover {
+            box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
+        }
+        .status-badge {
+            display: inline-flex;
+            align-items: center;
+            padding: 0.25rem 0.75rem;
+            border-radius: 9999px;
+            font-size: 0.75rem;
+            font-weight: 500;
+            text-transform: uppercase;
+            letter-spacing: 0.025em;
+        }
+        .status-pending { background-color: #fef3c7; color: #d97706; }
+        .status-confirmed { background-color: #d1fae5; color: #065f46; }
+        .status-cancelled { background-color: #fee2e2; color: #dc2626; }
+        .booking-grid {
+            display: grid;
+            gap: 1rem;
+            grid-template-columns: repeat(auto-fit, minmax(400px, 1fr));
+        }
+        @media (max-width: 640px) {
+            .booking-grid {
+                grid-template-columns: 1fr;
+            }
+        }
+    </style>
 </head>
-<body class="font-sans leading-relaxed text-gray-800 bg-gray-50">
+<body class="font-sans leading-relaxed text-gray-800 bg-gray-50 min-h-screen">
     <!-- Header -->
-    <header class="bg-sage-green w-full shadow-md">
+    <header class="bg-sage-green w-full shadow-lg border-b border-medium-gray border-opacity-20">
         <nav class="container-custom">
-            <div class="flex justify-between items-center py-4">
-                <h1 class="text-2xl font-medium text-dark-gray">Admin Panel - Birgittes Briks</h1>
-                <div class="flex gap-4">
-                    <a href="/index.html" class="text-medium-gray hover:text-gray-800 font-medium transition-colors">← Tilbage til hjemmeside</a>
-                    <button id="logoutBtn" class="bg-red-600 hover:bg-red-700 text-white px-4 py-2 rounded-md transition-colors">Log ud</button>
+            <div class="flex justify-between items-center py-6">
+                <div class="flex items-center gap-4">
+                    <div class="w-10 h-10 bg-white rounded-full flex items-center justify-center">
+                        <span class="text-sage-green font-bold text-lg">⚙️</span>
+                    </div>
+                    <div>
+                        <h1 class="text-2xl font-medium text-dark-gray">Admin Panel</h1>
+                        <p class="text-sm text-medium-gray">Birgittes Briks</p>
+                    </div>
+                </div>
+                <div class="flex gap-4 items-center">
+                    <a href="/" class="text-medium-gray hover:text-gray-800 font-medium transition-colors flex items-center gap-2">
+                        <span>←</span> Tilbage til hjemmeside
+                    </a>
+                    <button id="logoutBtn" class="bg-red-600 hover:bg-red-700 text-white px-4 py-2 rounded-lg transition-colors font-medium shadow-md">
+                        Log ud
+                    </button>
                 </div>
             </div>
         </nav>
@@ -23,51 +69,88 @@
     <!-- Main Content -->
     <main class="container-custom mt-8 mb-20">
         <!-- Login Section (hidden when logged in) -->
-        <div id="loginSection" class="max-w-md mx-auto bg-white p-8 rounded-lg shadow-lg">
-            <h2 class="text-2xl text-center text-dark-gray mb-6 font-light">Administrator Login</h2>
-            <form id="loginForm" class="space-y-4">
-                <div>
-                    <label for="username" class="block text-sm font-medium text-gray-700 mb-1">Brugernavn</label>
-                    <input type="text" id="username" name="username" required class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-sage-green focus:border-transparent">
+        <div id="loginSection" class="max-w-md mx-auto">
+            <div class="admin-card p-8">
+                <div class="text-center mb-6">
+                    <div class="w-16 h-16 bg-sage-green rounded-full mx-auto mb-4 flex items-center justify-center">
+                        <span class="text-white text-2xl">🔐</span>
+                    </div>
+                    <h2 class="text-2xl text-dark-gray font-medium">Administrator Login</h2>
+                    <p class="text-gray-600 mt-2">Log ind for at administrere bookinger</p>
                 </div>
-                <div>
-                    <label for="password" class="block text-sm font-medium text-gray-700 mb-1">Adgangskode</label>
-                    <input type="password" id="password" name="password" required class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-sage-green focus:border-transparent">
-                </div>
-                <button type="submit" class="w-full bg-sage-green hover:bg-green-600 text-white font-medium py-2 px-4 rounded-md transition-colors">
-                    Log ind
-                </button>
-            </form>
-            <div id="loginError" class="mt-4 text-red-600 text-center hidden"></div>
+                
+                <form id="loginForm" class="space-y-6">
+                    <div>
+                        <label for="username" class="block text-sm font-medium text-gray-700 mb-2">Brugernavn</label>
+                        <input type="text" 
+                               id="username" 
+                               name="username" 
+                               required 
+                               class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-sage-green focus:border-transparent transition-colors"
+                               placeholder="Indtast brugernavn">
+                    </div>
+                    <div>
+                        <label for="password" class="block text-sm font-medium text-gray-700 mb-2">Adgangskode</label>
+                        <input type="password" 
+                               id="password" 
+                               name="password" 
+                               required 
+                               class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-sage-green focus:border-transparent transition-colors"
+                               placeholder="Indtast adgangskode">
+                    </div>
+                    <button type="submit" class="w-full bg-sage-green hover:bg-green-600 text-white font-medium py-3 px-4 rounded-lg transition-colors shadow-md">
+                        <span class="flex items-center justify-center gap-2">
+                            <span>🔓</span> Log ind
+                        </span>
+                    </button>
+                </form>
+                <div id="loginError" class="mt-4 p-3 bg-red-100 border border-red-400 text-red-700 rounded-lg text-center hidden"></div>
+            </div>
         </div>
 
         <!-- Admin Dashboard (hidden until logged in) -->
         <div id="adminDashboard" class="hidden">
             <!-- Navigation Tabs -->
-            <div class="mb-8 border-b border-gray-200">
-                <nav class="flex space-x-8">
-                    <button class="tab-btn active py-2 px-1 border-b-2 border-sage-green text-sage-green font-medium" data-tab="bookings">
-                        Bookinger
-                    </button>
-                    <button class="tab-btn py-2 px-1 border-b-2 border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300 font-medium" data-tab="blocked-dates">
-                        Blokerede datoer
-                    </button>
-                    <button class="tab-btn py-2 px-1 border-b-2 border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300 font-medium" data-tab="manual-booking">
-                        Manuel booking
-                    </button>
-                </nav>
+            <div class="mb-8">
+                <div class="admin-card p-1">
+                    <nav class="flex space-x-1">
+                        <button class="tab-btn active flex-1 py-3 px-4 rounded-lg bg-sage-green text-white font-medium transition-colors" data-tab="bookings">
+                            <span class="flex items-center justify-center gap-2">
+                                📅 <span class="hidden sm:inline">Bookinger</span>
+                            </span>
+                        </button>
+                        <button class="tab-btn flex-1 py-3 px-4 rounded-lg text-gray-600 hover:text-gray-800 hover:bg-gray-100 font-medium transition-colors" data-tab="blocked-dates">
+                            <span class="flex items-center justify-center gap-2">
+                                🚫 <span class="hidden sm:inline">Blokerede datoer</span>
+                            </span>
+                        </button>
+                        <button class="tab-btn flex-1 py-3 px-4 rounded-lg text-gray-600 hover:text-gray-800 hover:bg-gray-100 font-medium transition-colors" data-tab="manual-booking">
+                            <span class="flex items-center justify-center gap-2">
+                                ➕ <span class="hidden sm:inline">Manuel booking</span>
+                            </span>
+                        </button>
+                    </nav>
+                </div>
             </div>
 
             <!-- Bookings Tab -->
             <div id="bookingsTab" class="tab-content">
-                <div class="bg-white rounded-lg shadow-lg">
-                    <div class="p-6 border-b border-gray-200">
-                        <h2 class="text-xl font-medium text-dark-gray">Alle bookinger</h2>
-                        <p class="text-gray-600 mt-1">Oversigt over indkomne bookinger</p>
+                <div class="admin-card overflow-hidden">
+                    <div class="bg-gradient-to-r from-sage-green to-green-600 p-6 text-white">
+                        <div class="flex items-center justify-between">
+                            <div>
+                                <h2 class="text-2xl font-medium">Alle bookinger</h2>
+                                <p class="opacity-90 mt-1">Oversigt over indkomne bookinger</p>
+                            </div>
+                            <div class="text-3xl">📋</div>
+                        </div>
                     </div>
                     <div class="p-6">
-                        <div id="bookingsList" class="space-y-4">
-                            <!-- Bookings will be loaded here -->
+                        <div id="bookingsList" class="booking-grid">
+                            <div class="flex items-center justify-center py-12">
+                                <div class="animate-spin rounded-full h-8 w-8 border-b-2 border-sage-green"></div>
+                                <span class="ml-3 text-gray-600">Indlæser bookinger...</span>
+                            </div>
                         </div>
                     </div>
                 </div>
@@ -75,34 +158,72 @@
 
             <!-- Blocked Dates Tab -->
             <div id="blocked-datesTab" class="tab-content hidden">
-                <div class="grid md:grid-cols-2 gap-8">
+                <div class="grid lg:grid-cols-2 gap-8">
                     <!-- Add Blocked Date -->
-                    <div class="bg-white rounded-lg shadow-lg p-6">
-                        <h2 class="text-xl font-medium text-dark-gray mb-4">Bloker dato/periode</h2>
-                        <form id="blockDateForm" class="space-y-4">
-                            <div>
-                                <label for="blockStartDate" class="block text-sm font-medium text-gray-700 mb-1">Fra dato</label>
-                                <input type="date" id="blockStartDate" name="startDate" required class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-sage-green">
+                    <div class="admin-card overflow-hidden">
+                        <div class="bg-gradient-to-r from-red-500 to-red-600 p-6 text-white">
+                            <div class="flex items-center justify-between">
+                                <div>
+                                    <h2 class="text-xl font-medium">Bloker dato/periode</h2>
+                                    <p class="opacity-90 mt-1">Marker utilgængelige datoer</p>
+                                </div>
+                                <div class="text-3xl">🚫</div>
                             </div>
-                            <div>
-                                <label for="blockEndDate" class="block text-sm font-medium text-gray-700 mb-1">Til dato (valgfri - lad stå tom for enkelt dag)</label>
-                                <input type="date" id="blockEndDate" name="endDate" class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-sage-green">
-                            </div>
-                            <div>
-                                <label for="blockReason" class="block text-sm font-medium text-gray-700 mb-1">Årsag (valgfri)</label>
-                                <input type="text" id="blockReason" name="reason" placeholder="f.eks. Ferie, kursus, sygdom" class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-sage-green">
-                            </div>
-                            <button type="submit" class="w-full bg-red-600 hover:bg-red-700 text-white font-medium py-2 px-4 rounded-md transition-colors">
-                                Bloker periode
-                            </button>
-                        </form>
+                        </div>
+                        <div class="p-6">
+                            <form id="blockDateForm" class="space-y-6">
+                                <div>
+                                    <label for="blockStartDate" class="block text-sm font-medium text-gray-700 mb-2">Fra dato</label>
+                                    <input type="date" 
+                                           id="blockStartDate" 
+                                           name="startDate" 
+                                           required 
+                                           class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-red-500 focus:border-transparent transition-colors">
+                                </div>
+                                <div>
+                                    <label for="blockEndDate" class="block text-sm font-medium text-gray-700 mb-2">Til dato</label>
+                                    <input type="date" 
+                                           id="blockEndDate" 
+                                           name="endDate" 
+                                           class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-red-500 focus:border-transparent transition-colors"
+                                           placeholder="Lad stå tom for enkelt dag">
+                                    <p class="text-xs text-gray-500 mt-1">Lad stå tom for enkelt dag</p>
+                                </div>
+                                <div>
+                                    <label for="blockReason" class="block text-sm font-medium text-gray-700 mb-2">Årsag</label>
+                                    <input type="text" 
+                                           id="blockReason" 
+                                           name="reason" 
+                                           placeholder="f.eks. Ferie, kursus, sygdom..." 
+                                           class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-red-500 focus:border-transparent transition-colors">
+                                </div>
+                                <button type="submit" class="w-full bg-red-600 hover:bg-red-700 text-white font-medium py-3 px-4 rounded-lg transition-colors shadow-md">
+                                    <span class="flex items-center justify-center gap-2">
+                                        🚫 Bloker periode
+                                    </span>
+                                </button>
+                            </form>
+                        </div>
                     </div>
 
                     <!-- Blocked Dates List -->
-                    <div class="bg-white rounded-lg shadow-lg p-6">
-                        <h2 class="text-xl font-medium text-dark-gray mb-4">Blokerede perioder</h2>
-                        <div id="blockedDatesList" class="space-y-3">
-                            <!-- Blocked dates will be loaded here -->
+                    <div class="admin-card overflow-hidden">
+                        <div class="bg-gradient-to-r from-gray-600 to-gray-700 p-6 text-white">
+                            <div class="flex items-center justify-between">
+                                <div>
+                                    <h2 class="text-xl font-medium">Blokerede perioder</h2>
+                                    <p class="opacity-90 mt-1">Aktive blokerede datoer</p>
+                                </div>
+                                <div class="text-3xl">📅</div>
+                            </div>
+                        </div>
+                        <div class="p-6">
+                            <div id="blockedDatesList" class="space-y-3 max-h-96 overflow-y-auto">
+                                <div class="flex items-center justify-center py-8">
+                                    <div class="animate-spin rounded-full h-6 w-6 border-b-2 border-gray-600"></div>
+                                    <span class="ml-3 text-gray-600">Indlæser...</span>
+                                </div>
+                            </div>
                         </div>
                     </div>
                 </div>
@@ -110,65 +231,105 @@
 
             <!-- Manual Booking Tab -->
             <div id="manual-bookingTab" class="tab-content hidden">
-                <div class="max-w-2xl mx-auto bg-white rounded-lg shadow-lg p-6">
-                    <h2 class="text-xl font-medium text-dark-gray mb-4">Opret manuel booking</h2>
-                    <form id="manualBookingForm" class="space-y-6">
-                        <div class="grid md:grid-cols-2 gap-4">
+                <div class="max-w-2xl mx-auto admin-card overflow-hidden">
+                    <div class="bg-gradient-to-r from-green-600 to-green-700 p-6 text-white">
+                        <div class="flex items-center justify-between">
                             <div>
-                                <label for="manualNavn" class="block text-sm font-medium text-gray-700 mb-1">Fulde navn *</label>
-                                <input type="text" id="manualNavn" name="navn" required class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-sage-green">
+                                <h2 class="text-2xl font-medium">Opret manuel booking</h2>
+                                <p class="opacity-90 mt-1">Tilføj booking direkte i systemet</p>
                             </div>
-                            <div>
-                                <label for="manualTelefon" class="block text-sm font-medium text-gray-700 mb-1">Telefonnummer *</label>
-                                <input type="tel" id="manualTelefon" name="telefon" required class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-sage-green">
-                            </div>
+                            <div class="text-3xl">➕</div>
                         </div>
-
-                        <div>
-                            <label for="manualEmail" class="block text-sm font-medium text-gray-700 mb-1">Email</label>
-                            <input type="email" id="manualEmail" name="email" class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-sage-green">
-                        </div>
-
-                        <div class="grid md:grid-cols-2 gap-4">
-                            <div>
-                                <label for="manualDato" class="block text-sm font-medium text-gray-700 mb-1">Dato *</label>
-                                <input type="date" id="manualDato" name="ønsket_dato" required class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-sage-green">
+                    </div>
+                    <div class="p-6">
+                        <form id="manualBookingForm" class="space-y-6">
+                            <div class="grid md:grid-cols-2 gap-6">
+                                <div>
+                                    <label for="manualNavn" class="block text-sm font-medium text-gray-700 mb-2">Fulde navn *</label>
+                                    <input type="text" 
+                                           id="manualNavn" 
+                                           name="navn" 
+                                           required 
+                                           class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-transparent transition-colors"
+                                           placeholder="Indtast fulde navn">
+                                </div>
+                                <div>
+                                    <label for="manualTelefon" class="block text-sm font-medium text-gray-700 mb-2">Telefonnummer *</label>
+                                    <input type="tel" 
+                                           id="manualTelefon" 
+                                           name="telefon" 
+                                           required 
+                                           class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-transparent transition-colors"
+                                           placeholder="f.eks. 21 85 34 17">
+                                </div>
                             </div>
+
                             <div>
-                                <label for="manualTid" class="block text-sm font-medium text-gray-700 mb-1">Tidspunkt *</label>
-                                <select id="manualTid" name="ønsket_tid" required class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-sage-green">
-                                    <option value="">Vælg tidspunkt</option>
-                                    <option value="08:00">08:00</option>
-                                    <option value="09:30">09:30</option>
-                                    <option value="11:00">11:00</option>
-                                    <option value="12:30">12:30</option>
-                                    <option value="14:00">14:00</option>
-                                    <option value="15:30">15:30</option>
-                                    <option value="17:00">17:00</option>
-                                    <option value="18:30">18:30</option>
+                                <label for="manualEmail" class="block text-sm font-medium text-gray-700 mb-2">Email</label>
+                                <input type="email" 
+                                       id="manualEmail" 
+                                       name="email" 
+                                       class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-transparent transition-colors"
+                                       placeholder="email@example.com (valgfri)">
+                            </div>
+
+                            <div class="grid md:grid-cols-2 gap-6">
+                                <div>
+                                    <label for="manualDato" class="block text-sm font-medium text-gray-700 mb-2">Dato *</label>
+                                    <input type="date" 
+                                           id="manualDato" 
+                                           name="ønsket_dato" 
+                                           required 
+                                           class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-transparent transition-colors">
+                                </div>
+                                <div>
+                                    <label for="manualTid" class="block text-sm font-medium text-gray-700 mb-2">Tidspunkt *</label>
+                                    <select id="manualTid" 
+                                            name="ønsket_tid" 
+                                            required 
+                                            class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-transparent transition-colors">
+                                        <option value="">Vælg tidspunkt</option>
+                                        <option value="08:00">08:00</option>
+                                        <option value="09:30">09:30</option>
+                                        <option value="11:00">11:00</option>
+                                        <option value="12:30">12:30</option>
+                                        <option value="14:00">14:00</option>
+                                        <option value="15:30">15:30</option>
+                                        <option value="17:00">17:00</option>
+                                        <option value="18:30">18:30</option>
+                                    </select>
+                                </div>
+                            </div>
+
+                            <div>
+                                <label for="manualBehandling" class="block text-sm font-medium text-gray-700 mb-2">Behandlingstype *</label>
+                                <select id="manualBehandling" 
+                                        name="behandling_type" 
+                                        required 
+                                        class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-transparent transition-colors">
+                                    <option value="">Vælg behandling</option>
+                                    <option value="Enkelt behandling (650 kr.)">Enkelt behandling (650 kr.)</option>
+                                    <option value="Klippekort 3 behandlinger (1800 kr.)">Klippekort 3 behandlinger (1800 kr.)</option>
+                                    <option value="Klippekort 10 behandlinger (5500 kr.)">Klippekort 10 behandlinger (5500 kr.)</option>
                                 </select>
                             </div>
-                        </div>
 
-                        <div>
-                            <label for="manualBehandling" class="block text-sm font-medium text-gray-700 mb-1">Behandlingstype *</label>
-                            <select id="manualBehandling" name="behandling_type" required class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-sage-green">
-                                <option value="">Vælg behandling</option>
-                                <option value="Enkelt behandling (650 kr.)">Enkelt behandling (650 kr.)</option>
-                                <option value="Klippekort 3 behandlinger (1800 kr.)">Klippekort 3 behandlinger (1800 kr.)</option>
-                                <option value="Klippekort 10 behandlinger (5500 kr.)">Klippekort 10 behandlinger (5500 kr.)</option>
-                            </select>
-                        </div>
+                            <div>
+                                <label for="manualBesked" class="block text-sm font-medium text-gray-700 mb-2">Besked/noter</label>
+                                <textarea id="manualBesked" 
+                                          name="besked" 
+                                          rows="4" 
+                                          class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-transparent transition-colors resize-none"
+                                          placeholder="Ekstra noter eller beskeder..."></textarea>
+                            </div>
 
-                        <div>
-                            <label for="manualBesked" class="block text-sm font-medium text-gray-700 mb-1">Besked/noter</label>
-                            <textarea id="manualBesked" name="besked" rows="3" class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-sage-green"></textarea>
-                        </div>
-
-                        <button type="submit" class="w-full bg-sage-green hover:bg-green-600 text-white font-medium py-3 px-4 rounded-md transition-colors">
-                            Opret booking
-                        </button>
-                    </form>
+                            <button type="submit" class="w-full bg-green-600 hover:bg-green-700 text-white font-medium py-3 px-4 rounded-lg transition-colors shadow-md">
+                                <span class="flex items-center justify-center gap-2">
+                                    ➕ Opret booking
+                                </span>
+                            </button>
+                        </form>
+                    </div>
                 </div>
             </div>
         </div>

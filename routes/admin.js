@@ -61,8 +61,8 @@ router.get('/auth-status', (req, res) => {
 // Get all bookings
 router.get('/bookings', requireAdmin, async (req, res) => {
     try {
-        const db = req.app.get('db');
-        const result = await db.query(
+        const { pool } = require('../database/connection');
+        const result = await pool.query(
             'SELECT * FROM bookings ORDER BY created_at DESC'
         );
         
@@ -79,7 +79,7 @@ router.get('/bookings', requireAdmin, async (req, res) => {
 // Create manual booking
 router.post('/bookings', requireAdmin, async (req, res) => {
     try {
-        const db = req.app.get('db');
+        const { pool } = require('../database/connection');
         const {
             navn,
             telefon,
@@ -100,7 +100,7 @@ router.post('/bookings', requireAdmin, async (req, res) => {
         }
         
         // Check for conflicts
-        const conflictCheck = await db.query(
+        const conflictCheck = await pool.query(
             'SELECT id FROM bookings WHERE ønsket_dato = $1 AND ønsket_tid = $2 AND status != $3',
             [ønsket_dato, ønsket_tid, 'cancelled']
         );
@@ -113,7 +113,7 @@ router.post('/bookings', requireAdmin, async (req, res) => {
         }
         
         // Check if date is blocked
-        const blockCheck = await db.query(
+        const blockCheck = await pool.query(
             'SELECT id FROM blocked_dates WHERE $1 BETWEEN start_date AND COALESCE(end_date, start_date)',
             [ønsket_dato]
         );
@@ -126,7 +126,7 @@ router.post('/bookings', requireAdmin, async (req, res) => {
         }
         
         // Insert booking
-        const result = await db.query(`
+        const result = await pool.query(`
             INSERT INTO bookings (
                 navn, telefon, email, ønsket_dato, ønsket_tid, 
                 behandling_type, besked, status, created_by_admin
@@ -152,11 +152,11 @@ router.post('/bookings', requireAdmin, async (req, res) => {
 // Update booking status
 router.put('/bookings/:id/status', requireAdmin, async (req, res) => {
     try {
-        const db = req.app.get('db');
+        const { pool } = require('../database/connection');
         const { id } = req.params;
         const { status } = req.body;
         
-        const result = await db.query(
+        const result = await pool.query(
             'UPDATE bookings SET status = $1 WHERE id = $2 RETURNING *',
             [status, id]
         );
@@ -186,8 +186,8 @@ router.put('/bookings/:id/status', requireAdmin, async (req, res) => {
 // Get blocked dates
 router.get('/blocked-dates', requireAdmin, async (req, res) => {
     try {
-        const db = req.app.get('db');
-        const result = await db.query(
+        const { pool } = require('../database/connection');
+        const result = await pool.query(
             'SELECT * FROM blocked_dates ORDER BY start_date ASC'
         );
         
@@ -204,7 +204,7 @@ router.get('/blocked-dates', requireAdmin, async (req, res) => {
 // Block date/period
 router.post('/blocked-dates', requireAdmin, async (req, res) => {
     try {
-        const db = req.app.get('db');
+        const { pool } = require('../database/connection');
         const { startDate, endDate, reason } = req.body;
         
         if (!startDate) {
@@ -226,7 +226,7 @@ router.post('/blocked-dates', requireAdmin, async (req, res) => {
         }
         
         // Check for existing bookings in the blocked period
-        const existingBookings = await db.query(`
+        const existingBookings = await pool.query(`
             SELECT COUNT(*) as count FROM bookings 
             WHERE ønsket_dato BETWEEN $1 AND $2 
             AND status != 'cancelled'
@@ -240,7 +240,7 @@ router.post('/blocked-dates', requireAdmin, async (req, res) => {
         }
         
         // Insert blocked period
-        const result = await db.query(`
+        const result = await pool.query(`
             INSERT INTO blocked_dates (start_date, end_date, reason) 
             VALUES ($1, $2, $3) 
             RETURNING *
@@ -264,10 +264,10 @@ router.post('/blocked-dates', requireAdmin, async (req, res) => {
 // Remove blocked date
 router.delete('/blocked-dates/:id', requireAdmin, async (req, res) => {
     try {
-        const db = req.app.get('db');
+        const { pool } = require('../database/connection');
         const { id } = req.params;
         
-        const result = await db.query(
+        const result = await pool.query(
             'DELETE FROM blocked_dates WHERE id = $1 RETURNING *',
             [id]
         );

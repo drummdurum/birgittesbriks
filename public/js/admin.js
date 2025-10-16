@@ -143,11 +143,11 @@ function switchTab(tabName) {
     // Update tab buttons
     tabBtns.forEach(btn => {
         if (btn.dataset.tab === tabName) {
-            btn.classList.add('active', 'border-sage-green', 'text-sage-green');
-            btn.classList.remove('border-transparent', 'text-gray-500');
+            btn.classList.add('active', 'bg-sage-green', 'text-white');
+            btn.classList.remove('text-gray-600', 'hover:bg-gray-100');
         } else {
-            btn.classList.remove('active', 'border-sage-green', 'text-sage-green');
-            btn.classList.add('border-transparent', 'text-gray-500');
+            btn.classList.remove('active', 'bg-sage-green', 'text-white');
+            btn.classList.add('text-gray-600', 'hover:bg-gray-100');
         }
     });
     
@@ -177,42 +177,94 @@ async function loadBookings() {
         const bookingsList = document.getElementById('bookingsList');
         
         if (bookings.length === 0) {
-            bookingsList.innerHTML = '<p class="text-gray-500 text-center py-8">Ingen bookinger endnu.</p>';
+            bookingsList.innerHTML = `
+                <div class="col-span-full text-center py-12">
+                    <div class="text-6xl mb-4">📝</div>
+                    <h3 class="text-lg font-medium text-gray-900 mb-2">Ingen bookinger endnu</h3>
+                    <p class="text-gray-500">Når kunder laver bookinger, vil de vises her</p>
+                </div>
+            `;
             return;
         }
         
         bookingsList.innerHTML = bookings.map(booking => `
-            <div class="border border-gray-200 rounded-lg p-4 ${booking.status === 'confirmed' ? 'bg-green-50' : 'bg-white'}">
-                <div class="flex justify-between items-start mb-3">
-                    <h3 class="font-medium text-lg text-dark-gray">${booking.navn}</h3>
-                    <span class="px-2 py-1 rounded-full text-xs font-medium ${getStatusColor(booking.status)}">
+            <div class="admin-card p-6 ${booking.status === 'confirmed' ? 'border-l-4 border-green-500' : booking.status === 'cancelled' ? 'border-l-4 border-red-500' : 'border-l-4 border-yellow-500'}">
+                <div class="flex justify-between items-start mb-4">
+                    <div>
+                        <h3 class="font-medium text-xl text-dark-gray mb-1">${booking.navn}</h3>
+                        <p class="text-sm text-gray-500">Booking #${booking.id}</p>
+                    </div>
+                    <span class="status-badge status-${booking.status}">
                         ${getStatusText(booking.status)}
                     </span>
                 </div>
-                <div class="grid md:grid-cols-2 gap-4 text-sm text-gray-600">
-                    <div>
-                        <p><strong>Telefon:</strong> ${booking.telefon}</p>
-                        ${booking.email ? `<p><strong>Email:</strong> ${booking.email}</p>` : ''}
-                        <p><strong>Dato:</strong> ${formatDate(booking.ønsket_dato)}</p>
-                        <p><strong>Tid:</strong> ${booking.ønsket_tid}</p>
+                
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
+                    <div class="space-y-3">
+                        <div class="flex items-center gap-3">
+                            <span class="text-lg">📞</span>
+                            <div>
+                                <p class="text-sm text-gray-500">Telefon</p>
+                                <p class="font-medium">${booking.telefon}</p>
+                            </div>
+                        </div>
+                        ${booking.email ? `
+                            <div class="flex items-center gap-3">
+                                <span class="text-lg">✉️</span>
+                                <div>
+                                    <p class="text-sm text-gray-500">Email</p>
+                                    <p class="font-medium">${booking.email}</p>
+                                </div>
+                            </div>
+                        ` : ''}
+                        <div class="flex items-center gap-3">
+                            <span class="text-lg">📅</span>
+                            <div>
+                                <p class="text-sm text-gray-500">Dato & Tid</p>
+                                <p class="font-medium">${formatDate(booking.ønsket_dato)} kl. ${booking.ønsket_tid}</p>
+                            </div>
+                        </div>
                     </div>
-                    <div>
-                        <p><strong>Behandling:</strong> ${booking.behandling_type}</p>
-                        <p><strong>Oprettet:</strong> ${formatDateTime(booking.created_at)}</p>
-                        ${booking.besked ? `<p><strong>Besked:</strong> ${booking.besked}</p>` : ''}
+                    <div class="space-y-3">
+                        <div class="flex items-center gap-3">
+                            <span class="text-lg">💆‍♀️</span>
+                            <div>
+                                <p class="text-sm text-gray-500">Behandling</p>
+                                <p class="font-medium">${booking.behandling_type}</p>
+                            </div>
+                        </div>
+                        <div class="flex items-center gap-3">
+                            <span class="text-lg">🕒</span>
+                            <div>
+                                <p class="text-sm text-gray-500">Oprettet</p>
+                                <p class="font-medium">${formatDateTime(booking.created_at)}</p>
+                            </div>
+                        </div>
+                        ${booking.besked ? `
+                            <div class="flex items-start gap-3">
+                                <span class="text-lg">💬</span>
+                                <div>
+                                    <p class="text-sm text-gray-500">Besked</p>
+                                    <p class="font-medium text-sm">${booking.besked}</p>
+                                </div>
+                            </div>
+                        ` : ''}
                     </div>
                 </div>
-                <div class="mt-3 flex gap-2">
+                
+                <div class="flex gap-3 pt-4 border-t border-gray-100">
                     ${booking.status !== 'confirmed' ? 
                         `<button onclick="updateBookingStatus('${booking.id}', 'confirmed')" 
-                                class="bg-green-600 hover:bg-green-700 text-white px-3 py-1 rounded text-sm transition-colors">
-                            Bekræft
+                                class="flex-1 bg-green-600 hover:bg-green-700 text-white px-4 py-2 rounded-lg text-sm font-medium transition-colors flex items-center justify-center gap-2">
+                            ✅ Bekræft booking
                         </button>` : ''
                     }
-                    <button onclick="updateBookingStatus('${booking.id}', 'cancelled')" 
-                            class="bg-red-600 hover:bg-red-700 text-white px-3 py-1 rounded text-sm transition-colors">
-                        Annuller
-                    </button>
+                    ${booking.status !== 'cancelled' ?
+                        `<button onclick="updateBookingStatus('${booking.id}', 'cancelled')" 
+                                class="flex-1 bg-red-600 hover:bg-red-700 text-white px-4 py-2 rounded-lg text-sm font-medium transition-colors flex items-center justify-center gap-2">
+                            ❌ Annuller booking
+                        </button>` : ''
+                    }
                 </div>
             </div>
         `).join('');
@@ -258,19 +310,30 @@ async function loadBlockedDates() {
         const blockedDatesList = document.getElementById('blockedDatesList');
         
         if (blockedDates.length === 0) {
-            blockedDatesList.innerHTML = '<p class="text-gray-500 text-center py-4">Ingen blokerede datoer.</p>';
+            blockedDatesList.innerHTML = `
+                <div class="text-center py-8">
+                    <div class="text-4xl mb-3">📅</div>
+                    <h3 class="font-medium text-gray-900 mb-1">Ingen blokerede datoer</h3>
+                    <p class="text-gray-500 text-sm">Tilføj datoer du ikke er tilgængelig</p>
+                </div>
+            `;
             return;
         }
         
         blockedDatesList.innerHTML = blockedDates.map(blocked => `
-            <div class="flex justify-between items-center p-3 bg-red-50 border border-red-200 rounded">
-                <div>
-                    <p class="font-medium">${formatDate(blocked.start_date)}${blocked.end_date ? ` - ${formatDate(blocked.end_date)}` : ''}</p>
-                    ${blocked.reason ? `<p class="text-sm text-gray-600">${blocked.reason}</p>` : ''}
+            <div class="flex justify-between items-center p-4 bg-red-50 border border-red-200 rounded-lg hover:bg-red-100 transition-colors">
+                <div class="flex items-center gap-3">
+                    <span class="text-lg">🚫</span>
+                    <div>
+                        <p class="font-medium text-gray-900">
+                            ${formatDate(blocked.start_date)}${blocked.end_date && blocked.end_date !== blocked.start_date ? ` - ${formatDate(blocked.end_date)}` : ''}
+                        </p>
+                        ${blocked.reason ? `<p class="text-sm text-gray-600">${blocked.reason}</p>` : ''}
+                    </div>
                 </div>
                 <button onclick="removeBlockedDate('${blocked.id}')" 
-                        class="bg-red-600 hover:bg-red-700 text-white px-2 py-1 rounded text-sm transition-colors">
-                    Fjern
+                        class="bg-red-600 hover:bg-red-700 text-white px-3 py-2 rounded-lg text-sm font-medium transition-colors flex items-center gap-1">
+                    🗑️ Fjern
                 </button>
             </div>
         `).join('');
