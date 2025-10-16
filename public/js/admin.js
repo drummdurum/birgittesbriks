@@ -47,6 +47,29 @@ function setupEventListeners() {
     document.getElementById('blockStartDate').addEventListener('change', function() {
         document.getElementById('blockEndDate').min = this.value;
     });
+    
+    // Event delegation for booking action buttons
+    document.addEventListener('click', function(e) {
+        if (e.target.classList.contains('booking-action-btn')) {
+            const action = e.target.dataset.action;
+            const bookingId = e.target.dataset.bookingId;
+            
+            if (action === 'confirm') {
+                updateBookingStatus(bookingId, 'confirmed');
+            } else if (action === 'cancel') {
+                updateBookingStatus(bookingId, 'cancelled');
+            }
+        }
+        
+        if (e.target.classList.contains('blocked-action-btn')) {
+            const action = e.target.dataset.action;
+            const blockedId = e.target.dataset.blockedId;
+            
+            if (action === 'remove-blocked') {
+                removeBlockedDate(blockedId);
+            }
+        }
+    });
 }
 
 // Check authentication status
@@ -254,14 +277,14 @@ async function loadBookings() {
                 
                 <div class="flex gap-3 pt-4 border-t border-gray-100">
                     ${booking.status !== 'confirmed' ? 
-                        `<button onclick="updateBookingStatus('${booking.id}', 'confirmed')" 
-                                class="flex-1 bg-green-600 hover:bg-green-700 text-white px-4 py-2 rounded-lg text-sm font-medium transition-colors flex items-center justify-center gap-2">
+                        `<button data-action="confirm" data-booking-id="${booking.id}" 
+                                class="booking-action-btn flex-1 bg-green-600 hover:bg-green-700 text-white px-4 py-2 rounded-lg text-sm font-medium transition-colors flex items-center justify-center gap-2">
                             ✅ Bekræft booking
                         </button>` : ''
                     }
                     ${booking.status !== 'cancelled' ?
-                        `<button onclick="updateBookingStatus('${booking.id}', 'cancelled')" 
-                                class="flex-1 bg-red-600 hover:bg-red-700 text-white px-4 py-2 rounded-lg text-sm font-medium transition-colors flex items-center justify-center gap-2">
+                        `<button data-action="cancel" data-booking-id="${booking.id}" 
+                                class="booking-action-btn flex-1 bg-red-600 hover:bg-red-700 text-white px-4 py-2 rounded-lg text-sm font-medium transition-colors flex items-center justify-center gap-2">
                             ❌ Annuller booking
                         </button>` : ''
                     }
@@ -331,8 +354,8 @@ async function loadBlockedDates() {
                         ${blocked.reason ? `<p class="text-sm text-gray-600">${blocked.reason}</p>` : ''}
                     </div>
                 </div>
-                <button onclick="removeBlockedDate('${blocked.id}')" 
-                        class="bg-red-600 hover:bg-red-700 text-white px-3 py-2 rounded-lg text-sm font-medium transition-colors flex items-center gap-1">
+                <button data-action="remove-blocked" data-blocked-id="${blocked.id}" 
+                        class="blocked-action-btn bg-red-600 hover:bg-red-700 text-white px-3 py-2 rounded-lg text-sm font-medium transition-colors flex items-center gap-1">
                     🗑️ Fjern
                 </button>
             </div>
