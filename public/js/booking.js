@@ -1,5 +1,7 @@
 // Booking form JavaScript
 document.addEventListener('DOMContentLoaded', function() {
+    console.log('🚀 Booking form initializing...');
+    
     const form = document.getElementById('booking-form');
     const submitBtn = document.getElementById('submit-btn');
     const submitText = document.getElementById('submit-text');
@@ -7,6 +9,17 @@ document.addEventListener('DOMContentLoaded', function() {
     const successMessage = document.getElementById('success-message');
     const errorMessage = document.getElementById('error-message');
     const errorText = document.getElementById('error-text');
+    
+    // Debug: Check if all elements are found
+    console.log('📋 Elements check:', {
+        form: !!form,
+        submitBtn: !!submitBtn,
+        submitText: !!submitText,
+        submitLoading: !!submitLoading,
+        successMessage: !!successMessage,
+        errorMessage: !!errorMessage,
+        errorText: !!errorText
+    });
 
     // Set minimum date to today
     const dateInput = document.getElementById('ønsket_dato');
@@ -170,6 +183,8 @@ document.addEventListener('DOMContentLoaded', function() {
             // Convert checkbox to boolean
             data.gdpr_samtykke = gdprCheckbox.checked ? 'true' : 'false';
 
+            console.log('📤 Sending booking request:', data);
+            
             const response = await fetch('/api/bookings', {
                 method: 'POST',
                 headers: {
@@ -178,10 +193,13 @@ document.addEventListener('DOMContentLoaded', function() {
                 body: JSON.stringify(data)
             });
 
+            console.log('📥 Response status:', response.status);
             const result = await response.json();
+            console.log('📥 Response data:', result);
 
             if (response.ok) {
                 // Success
+                console.log('✅ Booking successful');
                 form.reset();
                 showMessage(successMessage);
                 // Scroll to top
@@ -206,7 +224,7 @@ document.addEventListener('DOMContentLoaded', function() {
                 showMessage(errorMessage);
             }
         } catch (error) {
-            console.error('Booking error:', error);
+            console.error('❌ Booking error:', error);
             errorText.textContent = 'Der opstod en netværksfejl. Tjek din internetforbindelse og prøv igen.';
             showMessage(errorMessage);
         } finally {
