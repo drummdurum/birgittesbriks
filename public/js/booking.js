@@ -15,9 +15,20 @@ document.addEventListener('DOMContentLoaded', function() {
 
     // Form validation functions
     const validateField = (field) => {
-        const errorDiv = field.parentElement.querySelector('.error-message');
+        // Try to find error div in parent element, or in parent's parent for checkbox
+        let errorDiv = field.parentElement.querySelector('.error-message');
+        if (!errorDiv && field.type === 'checkbox') {
+            errorDiv = field.parentElement.parentElement.querySelector('.error-message');
+        }
+        
         let isValid = true;
         let errorMsg = '';
+
+        // Skip validation if no error div found
+        if (!errorDiv) {
+            console.warn('No error div found for field:', field.name);
+            return true;
+        }
 
         switch(field.name) {
             case 'navn':
@@ -78,15 +89,17 @@ document.addEventListener('DOMContentLoaded', function() {
         }
 
         // Show/hide error message
-        if (isValid) {
-            errorDiv.classList.add('hidden');
-            field.classList.remove('border-red-500');
-            field.classList.add('border-gray-300');
-        } else {
-            errorDiv.textContent = errorMsg;
-            errorDiv.classList.remove('hidden');
-            field.classList.add('border-red-500');
-            field.classList.remove('border-gray-300');
+        if (errorDiv) {
+            if (isValid) {
+                errorDiv.classList.add('hidden');
+                field.classList.remove('border-red-500');
+                field.classList.add('border-gray-300');
+            } else {
+                errorDiv.textContent = errorMsg;
+                errorDiv.classList.remove('hidden');
+                field.classList.add('border-red-500');
+                field.classList.remove('border-gray-300');
+            }
         }
 
         return isValid;

@@ -28,13 +28,11 @@ CREATE TABLE IF NOT EXISTS blocked_dates (
 
 -- Create sessions table for express-session
 CREATE TABLE IF NOT EXISTS session (
-    sid VARCHAR NOT NULL COLLATE "default",
+    sid VARCHAR NOT NULL COLLATE "default" PRIMARY KEY,
     sess JSON NOT NULL,
     expire TIMESTAMP(6) NOT NULL
 )
 WITH (OIDS=FALSE);
-
-ALTER TABLE session ADD CONSTRAINT session_pkey PRIMARY KEY (sid) NOT DEFERRABLE INITIALLY IMMEDIATE;
 
 -- Create indexes for faster queries
 CREATE INDEX IF NOT EXISTS idx_bookings_status ON bookings(status);
