@@ -37,7 +37,7 @@
     <main class="container-custom mt-8 mb-20">
         <!-- Login Section (hidden when logged in) -->
         <div id="loginSection" class="max-w-md mx-auto">
-            <div class="admin-card p-8">
+                <div class="admin-card">
                 <div class="text-center mb-6">
                     <div class="w-16 h-16 bg-sage-green rounded-full mx-auto mb-4 flex items-center justify-center">
                         <span class="text-white text-2xl">🔐</span>
@@ -79,7 +79,7 @@
         <div id="adminDashboard" class="hidden">
             <!-- Navigation Tabs -->
             <div class="mb-8">
-                <div class="admin-card p-1">
+                <div class="admin-card" style="padding: 0.25rem;">
                     <nav class="flex space-x-1">
                         <button class="tab-btn active flex-1 py-3 px-4 rounded-lg bg-sage-green text-white font-medium transition-colors" data-tab="bookings">
                             <span class="flex items-center justify-center gap-2">
@@ -102,7 +102,7 @@
 
             <!-- Bookings Tab -->
             <div id="bookingsTab" class="tab-content">
-                <div class="admin-card overflow-hidden">
+                <div class="admin-card" style="padding: 0; overflow: hidden;">
                     <div class="bg-gradient-to-r from-sage-green to-green-600 p-6 text-white">
                         <div class="flex items-center justify-between">
                             <div>
@@ -127,7 +127,7 @@
             <div id="blocked-datesTab" class="tab-content hidden">
                 <div class="grid lg:grid-cols-2 gap-8">
                     <!-- Add Blocked Date -->
-                    <div class="admin-card overflow-hidden">
+                    <div class="admin-card" style="padding: 0; overflow: hidden;">
                         <div class="bg-gradient-to-r from-red-500 to-red-600 p-6 text-white">
                             <div class="flex items-center justify-between">
                                 <div>
@@ -174,7 +174,7 @@
                     </div>
 
                     <!-- Blocked Dates List -->
-                    <div class="admin-card overflow-hidden">
+                    <div class="admin-card" style="padding: 0; overflow: hidden;">
                         <div class="bg-gradient-to-r from-gray-600 to-gray-700 p-6 text-white">
                             <div class="flex items-center justify-between">
                                 <div>
@@ -198,7 +198,7 @@
 
             <!-- Manual Booking Tab -->
             <div id="manual-bookingTab" class="tab-content hidden">
-                <div class="max-w-2xl mx-auto admin-card overflow-hidden">
+                <div class="max-w-2xl mx-auto admin-card" style="padding: 0; overflow: hidden;">
                     <div class="bg-gradient-to-r from-green-600 to-green-700 p-6 text-white">
                         <div class="flex items-center justify-between">
                             <div>

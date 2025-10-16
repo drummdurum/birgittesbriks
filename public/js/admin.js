@@ -12,16 +12,32 @@ const logoutBtn = document.getElementById('logoutBtn');
 const tabBtns = document.querySelectorAll('.tab-btn');
 const tabContents = document.querySelectorAll('.tab-content');
 
+// Prevent Chrome extension runtime errors
+window.addEventListener('error', function(e) {
+    if (e.message && e.message.includes('runtime.lastError')) {
+        e.preventDefault();
+        return false;
+    }
+});
+
 // Initialize
 document.addEventListener('DOMContentLoaded', function() {
-    checkAuthStatus();
-    setupEventListeners();
-    
-    // Set minimum date to today for date inputs
-    const today = new Date().toISOString().split('T')[0];
-    document.getElementById('blockStartDate').min = today;
-    document.getElementById('blockEndDate').min = today;
-    document.getElementById('manualDato').min = today;
+    try {
+        checkAuthStatus();
+        setupEventListeners();
+        
+        // Set minimum date to today for date inputs
+        const today = new Date().toISOString().split('T')[0];
+        const blockStartDate = document.getElementById('blockStartDate');
+        const blockEndDate = document.getElementById('blockEndDate');
+        const manualDato = document.getElementById('manualDato');
+        
+        if (blockStartDate) blockStartDate.min = today;
+        if (blockEndDate) blockEndDate.min = today;
+        if (manualDato) manualDato.min = today;
+    } catch (error) {
+        console.error('Initialization error:', error);
+    }
 });
 
 // Setup event listeners
