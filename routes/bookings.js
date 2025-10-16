@@ -107,6 +107,34 @@ router.post('/', bookingLimiter, bookingValidation, async (req, res) => {
       gdpr_samtykke
     } = req.body;
 
+    // Check if the requested date is blocked
+    if (ønsket_dato) {
+      const blockedCheck = await pool.query(
+        'SELECT id FROM blocked_dates WHERE $1 BETWEEN start_date AND COALESCE(end_date, start_date)',
+        [ønsket_dato]
+      );
+      
+      if (blockedCheck.rows.length > 0) {
+        return res.status(400).json({
+          error: 'Den valgte dato er ikke tilgængelig for booking. Vælg venligst en anden dato.'
+        });
+      }
+    }
+
+    // Check for time conflicts
+    if (ønsket_dato && ønsket_tid) {
+      const conflictCheck = await pool.query(
+        'SELECT id FROM bookings WHERE ønsket_dato = $1 AND ønsket_tid = $2 AND status != $3',
+        [ønsket_dato, ønsket_tid, 'cancelled']
+      );
+      
+      if (conflictCheck.rows.length > 0) {
+        return res.status(400).json({
+          error: 'Det valgte tidspunkt er allerede optaget. Vælg venligst et andet tidspunkt.'
+        });
+      }
+    }
+
     // Insert booking into database
     const result = await pool.query(
       `INSERT INTO bookings 

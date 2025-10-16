@@ -67,6 +67,20 @@ app.use(express.static(path.join(__dirname, 'public')));
 
 // API routes
 app.use('/api/bookings', bookingsRouter);
+app.use('/api/admin', require('./routes/admin'));
+
+// Public API for blocked dates (for booking form)
+app.get('/api/blocked-dates', async (req, res) => {
+    try {
+        const result = await pool.query(
+            'SELECT start_date, end_date FROM blocked_dates ORDER BY start_date ASC'
+        );
+        res.json(result.rows);
+    } catch (error) {
+        console.error('Error fetching blocked dates:', error);
+        res.status(500).json({ error: 'Kunne ikke hente blokerede datoer' });
+    }
+});
 
 // Page routes
 app.get('/', (req, res) => {
@@ -79,6 +93,10 @@ app.get('/booking', (req, res) => {
 
 app.get('/booking-confirmation', (req, res) => {
     res.sendFile(path.join(__dirname, 'public', 'booking.html'));
+});
+
+app.get('/admin', (req, res) => {
+    res.sendFile(path.join(__dirname, 'public', 'admin.html'));
 });
 
 // Health check endpoint
@@ -109,9 +127,13 @@ const startServer = async () => {
         // Test database connection
         await testConnection();
         
-        // Initialize database schema (only runs if tables don't exist)
-        if (process.env.NODE_ENV !== 'production') {
+        // Initialize database schema
+        try {
             await initDatabase();
+            console.log('✅ Database schema verified');
+        } catch (dbError) {
+            console.warn('⚠️ Database initialization warning:', dbError.message);
+            // Don't fail server start if database init fails
         }
         
         // Start server
