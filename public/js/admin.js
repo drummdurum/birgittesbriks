@@ -207,122 +207,96 @@ function switchTab(tabName) {
     }
 }
 
-// Load bookings
+// Load bookings and show clickable days + per-day list
 async function loadBookings() {
     try {
         const response = await fetch('/api/admin/bookings');
-        
+
         if (!response.ok) {
             throw new Error(`HTTP error! status: ${response.status}`);
         }
-        
+
         const bookings = await response.json();
-        
-        // Ensure bookings is an array
+
         if (!Array.isArray(bookings)) {
             throw new Error('Invalid response format: expected array');
         }
-        
-        const bookingsList = document.getElementById('bookingsList');
-        
+
+        const bookingDaysEl = document.getElementById('bookingDays');
+        const bookingsOfDayEl = document.getElementById('bookingsOfDay');
+
         if (bookings.length === 0) {
-            bookingsList.innerHTML = `
-                <div class="col-span-full text-center py-12">
-                    <div class="text-6xl mb-4">📝</div>
-                    <h3 class="text-lg font-medium text-gray-900 mb-2">Ingen bookinger endnu</h3>
-                    <p class="text-gray-500">Når kunder laver bookinger, vil de vises her</p>
-                </div>
-            `;
+            bookingDaysEl.innerHTML = `<div class="text-center py-8"><div class="text-4xl mb-3">📝</div><p class="text-gray-500">Ingen bookinger endnu</p></div>`;
+            bookingsOfDayEl.innerHTML = '';
             return;
         }
-        
-        bookingsList.innerHTML = bookings.map(booking => `
-            <div class="admin-card p-6 ${booking.status === 'confirmed' ? 'border-l-4 border-green-500' : booking.status === 'cancelled' ? 'border-l-4 border-red-500' : 'border-l-4 border-yellow-500'}">
-                <div class="flex justify-between items-start mb-4">
-                    <div>
-                        <h3 class="font-medium text-xl text-dark-gray mb-1">${booking.navn}</h3>
-                        <p class="text-sm text-gray-500">Booking #${booking.id}</p>
-                    </div>
-                    <span class="status-badge status-${booking.status}">
-                        ${getStatusText(booking.status)}
-                    </span>
+
+        // Group by ønsket_dato
+        const grouped = bookings.reduce((acc, b) => {
+            const date = b.ønsket_dato;
+            if (!acc[date]) acc[date] = [];
+            acc[date].push(b);
+            return acc;
+        }, {});
+
+        const days = Object.keys(grouped).sort();
+
+        bookingDaysEl.innerHTML = days.map(d => `
+            <button data-date="${d}" class="day-btn w-full text-left p-3 rounded-lg hover:bg-gray-100 flex items-center justify-between">
+                <div>
+                    <div class="font-medium">${formatDate(d)}</div>
+                    <div class="text-sm text-gray-500">${grouped[d].length} booking${grouped[d].length>1?'er':''}</div>
                 </div>
-                
-                <div class="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
-                    <div class="space-y-3">
-                        <div class="flex items-center gap-3">
-                            <span class="text-lg">📞</span>
-                            <div>
-                                <p class="text-sm text-gray-500">Telefon</p>
-                                <p class="font-medium">${booking.telefon}</p>
-                            </div>
-                        </div>
-                        ${booking.email ? `
-                            <div class="flex items-center gap-3">
-                                <span class="text-lg">✉️</span>
-                                <div>
-                                    <p class="text-sm text-gray-500">Email</p>
-                                    <p class="font-medium">${booking.email}</p>
-                                </div>
-                            </div>
-                        ` : ''}
-                        <div class="flex items-center gap-3">
-                            <span class="text-lg">📅</span>
-                            <div>
-                                <p class="text-sm text-gray-500">Dato & Tid</p>
-                                <p class="font-medium">${formatDate(booking.ønsket_dato)} kl. ${booking.ønsket_tid}</p>
-                            </div>
-                        </div>
-                    </div>
-                    <div class="space-y-3">
-                        <div class="flex items-center gap-3">
-                            <span class="text-lg">💆‍♀️</span>
-                            <div>
-                                <p class="text-sm text-gray-500">Behandling</p>
-                                <p class="font-medium">${booking.behandling_type}</p>
-                            </div>
-                        </div>
-                        <div class="flex items-center gap-3">
-                            <span class="text-lg">🕒</span>
-                            <div>
-                                <p class="text-sm text-gray-500">Oprettet</p>
-                                <p class="font-medium">${formatDateTime(booking.created_at)}</p>
-                            </div>
-                        </div>
-                        ${booking.besked ? `
-                            <div class="flex items-start gap-3">
-                                <span class="text-lg">💬</span>
-                                <div>
-                                    <p class="text-sm text-gray-500">Besked</p>
-                                    <p class="font-medium text-sm">${booking.besked}</p>
-                                </div>
-                            </div>
-                        ` : ''}
-                    </div>
-                </div>
-                
-                <div class="flex gap-3 pt-4 border-t border-gray-100">
-                    ${booking.status !== 'confirmed' ? 
-                        `<button data-action="confirm" data-booking-id="${booking.id}" 
-                                class="booking-action-btn flex-1 bg-green-600 hover:bg-green-700 text-white px-4 py-2 rounded-lg text-sm font-medium transition-colors flex items-center justify-center gap-2">
-                            ✅ Bekræft booking
-                        </button>` : ''
-                    }
-                    ${booking.status !== 'cancelled' ?
-                        `<button data-action="cancel" data-booking-id="${booking.id}" 
-                                class="booking-action-btn flex-1 bg-red-600 hover:bg-red-700 text-white px-4 py-2 rounded-lg text-sm font-medium transition-colors flex items-center justify-center gap-2">
-                            ❌ Annuller booking
-                        </button>` : ''
-                    }
-                </div>
-            </div>
+                <div class="text-sm text-gray-400">›</div>
+            </button>
         `).join('');
-        
+
+        // Attach click handlers
+        document.querySelectorAll('#bookingDays .day-btn').forEach(btn => {
+            btn.addEventListener('click', () => {
+                const date = btn.dataset.date;
+                // mark active
+                document.querySelectorAll('#bookingDays .day-btn').forEach(b => b.classList.remove('bg-sage-green', 'text-white'));
+                btn.classList.add('bg-sage-green', 'text-white');
+                renderBookingsForDate(grouped[date], bookingsOfDayEl);
+            });
+        });
+
+        // Auto-select first day
+        if (days.length > 0) {
+            const firstBtn = document.querySelector(`#bookingDays .day-btn[data-date="${days[0]}"]`);
+            if (firstBtn) firstBtn.click();
+        }
+
     } catch (error) {
         console.error('Error loading bookings:', error);
-        document.getElementById('bookingsList').innerHTML = 
-            '<p class="text-red-500 text-center py-8">Fejl ved indlæsning af bookinger.</p>';
+        document.getElementById('bookingsList').innerHTML = '<p class="text-red-500 text-center py-8">Fejl ved indlæsning af bookinger.</p>';
     }
+}
+
+// Render bookings for a specific date into the provided container
+function renderBookingsForDate(bookingsForDate, containerEl) {
+    containerEl.innerHTML = bookingsForDate.map(booking => `
+        <div class="admin-card p-4 ${booking.status === 'confirmed' ? 'border-l-4 border-green-500' : booking.status === 'cancelled' ? 'border-l-4 border-red-500' : 'border-l-4 border-yellow-500'}">
+            <div class="flex justify-between items-start mb-2">
+                <div>
+                    <h4 class="font-medium text-lg">${booking.navn}</h4>
+                    <p class="text-sm text-gray-500">Booking #${booking.id} · kl. ${booking.ønsket_tid}</p>
+                </div>
+                <div class="text-sm status-badge status-${booking.status}">${getStatusText(booking.status)}</div>
+            </div>
+            <div class="text-sm text-gray-700 mb-3">
+                <div>📞 ${booking.telefon}</div>
+                ${booking.email ? `<div>✉️ ${booking.email}</div>` : ''}
+                <div>💆‍♀️ ${booking.behandling_type}</div>
+                ${booking.besked ? `<div class="mt-2">💬 ${booking.besked}</div>` : ''}
+            </div>
+            <div class="flex gap-3 pt-2 border-t border-gray-100">
+                ${booking.status !== 'confirmed' ? `<button data-action="confirm" data-booking-id="${booking.id}" class="booking-action-btn flex-1 bg-green-600 hover:bg-green-700 text-white px-3 py-2 rounded-lg text-sm font-medium">✅ Bekræft</button>` : ''}
+                ${booking.status !== 'cancelled' ? `<button data-action="cancel" data-booking-id="${booking.id}" class="booking-action-btn flex-1 bg-red-600 hover:bg-red-700 text-white px-3 py-2 rounded-lg text-sm font-medium">❌ Annuller</button>` : ''}
+            </div>
+        </div>
+    `).join('');
 }
 
 // Update booking status

@@ -114,9 +114,22 @@
                     </div>
                     <div class="p-6">
                         <div id="bookingsList" class="booking-grid">
-                            <div class="flex items-center justify-center py-12">
-                                <div class="animate-spin rounded-full h-8 w-8 border-b-2 border-sage-green"></div>
-                                <span class="ml-3 text-gray-600">Indlæser bookinger...</span>
+                            <div class="grid lg:grid-cols-3 gap-6">
+                                <!-- Days list -->
+                                <div id="bookingDays" class="col-span-1 space-y-3 max-h-96 overflow-y-auto">
+                                    <div class="flex items-center justify-center py-8">
+                                        <div class="animate-spin rounded-full h-6 w-6 border-b-2 border-sage-green"></div>
+                                        <span class="ml-3 text-gray-600">Indlæser dage...</span>
+                                    </div>
+                                </div>
+
+                                <!-- Bookings for selected day -->
+                                <div id="bookingsOfDay" class="col-span-2 space-y-3">
+                                    <div class="text-center py-12">
+                                        <div class="text-4xl mb-3">📅</div>
+                                        <p class="text-gray-500">Vælg en dag til venstre for at se bookinger</p>
+                                    </div>
+                                </div>
                             </div>
                         </div>
                     </div>
