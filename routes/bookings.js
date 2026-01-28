@@ -80,6 +80,7 @@ router.get('/', async (req, res) => {
         behandling_type: true,
         besked: true,
         status: true,
+        completed: true,
         created_at: true
       }
     });
@@ -88,7 +89,8 @@ router.get('/', async (req, res) => {
     const serializedBookings = bookings.map(booking => ({
       ...booking,
       ønsket_dato: booking.ønsket_dato ? new Date(booking.ønsket_dato).toISOString().split('T')[0] : null,
-      created_at: booking.created_at ? booking.created_at.toISOString() : null
+      created_at: booking.created_at ? booking.created_at.toISOString() : null,
+      completed: booking.completed === true
     }));
     
     res.json({
@@ -231,9 +233,12 @@ router.put('/:id/status', async (req, res) => {
       });
     }
 
+    const updateData = { status };
+    if (status === 'completed') updateData.completed = true;
+
     const result = await prisma.booking.update({
       where: { id: parseInt(id) },
-      data: { status }
+      data: updateData
     });
 
     if (!result) {

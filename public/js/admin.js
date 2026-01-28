@@ -69,11 +69,15 @@ function setupEventListeners() {
         if (e.target.classList.contains('booking-action-btn')) {
             const action = e.target.dataset.action;
             const bookingId = e.target.dataset.bookingId;
-            
+
             if (action === 'confirm') {
                 updateBookingStatus(bookingId, 'confirmed');
             } else if (action === 'cancel') {
                 updateBookingStatus(bookingId, 'cancelled');
+            } else if (action === 'complete') {
+                if (confirm('Markér denne booking som færdig?')) {
+                    updateBookingStatus(bookingId, 'completed');
+                }
             }
         }
         
@@ -294,6 +298,7 @@ function renderBookingsForDate(bookingsForDate, containerEl) {
             <div class="flex gap-3 pt-2 border-t border-gray-100">
                 ${booking.status !== 'confirmed' ? `<button data-action="confirm" data-booking-id="${booking.id}" class="booking-action-btn flex-1 bg-green-600 hover:bg-green-700 text-white px-3 py-2 rounded-lg text-sm font-medium">✅ Bekræft</button>` : ''}
                 ${booking.status !== 'cancelled' ? `<button data-action="cancel" data-booking-id="${booking.id}" class="booking-action-btn flex-1 bg-red-600 hover:bg-red-700 text-white px-3 py-2 rounded-lg text-sm font-medium">❌ Annuller</button>` : ''}
+                ${booking.status !== 'completed' ? `<button data-action="complete" data-booking-id="${booking.id}" class="booking-action-btn flex-1 bg-blue-600 hover:bg-blue-700 text-white px-3 py-2 rounded-lg text-sm font-medium">✔️ Færdig</button>` : ''}
             </div>
         </div>
     `).join('');
@@ -314,7 +319,8 @@ async function updateBookingStatus(bookingId, status) {
         
         if (result.success) {
             loadBookings(); // Reload the bookings list
-            showNotification(`Booking ${status === 'confirmed' ? 'bekræftet' : 'annulleret'}`, 'success');
+            const msg = status === 'confirmed' ? 'bekræftet' : status === 'cancelled' ? 'annulleret' : status === 'completed' ? 'markeret som færdig' : 'opdateret';
+            showNotification(`Booking ${msg}`, 'success');
         } else {
             showNotification('Fejl ved opdatering af booking', 'error');
         }

@@ -18,6 +18,7 @@ const initDatabase = async () => {
         behandling_type VARCHAR(50) DEFAULT 'Enkelt behandling',
         besked TEXT,
         status VARCHAR(20) DEFAULT 'pending',
+        completed BOOLEAN DEFAULT false,
         gdpr_samtykke BOOLEAN NOT NULL DEFAULT false,
         created_by_admin BOOLEAN DEFAULT false,
         created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
@@ -43,6 +44,11 @@ const initDatabase = async () => {
       CREATE INDEX IF NOT EXISTS idx_bookings_email ON bookings(email);
       CREATE INDEX IF NOT EXISTS idx_bookings_date_time ON bookings(ønsket_dato, ønsket_tid);
       CREATE INDEX IF NOT EXISTS idx_blocked_dates_range ON blocked_dates(start_date, end_date);
+    `);
+    
+    // Add completed column if it doesn't exist
+    await pool.query(`
+      ALTER TABLE bookings ADD COLUMN IF NOT EXISTS completed BOOLEAN DEFAULT false;
     `);
     
     // Create trigger function if it doesn't exist

@@ -194,9 +194,12 @@ router.put('/bookings/:id/status', requireAdmin, async (req, res) => {
         const { id } = req.params;
         const { status } = req.body;
         
+        const updateData = { status };
+        if (status === 'completed') updateData.completed = true;
+
         const booking = await prisma.booking.update({
             where: { id: parseInt(id) },
-            data: { status }
+            data: updateData
         });
         
         if (!booking) {
