@@ -229,6 +229,13 @@ router.get('/blocked-dates', requireAdmin, async (req, res) => {
             success: false, 
             message: 'Fejl ved hentning af blokerede datoer',
             error: process.env.NODE_ENV === 'development' ? error.message : undefined
+        });
+    }
+});
+
+// Block date/period
+router.post('/blocked-dates', requireAdmin, async (req, res) => {
+    try {
         const { startDate, endDate, reason } = req.body;
         
         if (!startDate) {
