@@ -20,6 +20,7 @@ model Booking {
   behandling_type   String    @default("Enkelt behandling") @db.VarChar(50)
   besked            String?
   status            String    @default("pending") @db.VarChar(20)
+  completed         Boolean   @default(false)
   gdpr_samtykke     Boolean   @default(false)
   created_by_admin  Boolean   @default(false)
   created_at        DateTime  @default(now())
