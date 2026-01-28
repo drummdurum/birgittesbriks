@@ -1,7 +1,7 @@
 const express = require('express');
 const { body, validationResult } = require('express-validator');
 const rateLimit = require('express-rate-limit');
-const { pool } = require('../database/connection');
+const { prisma } = require('../database/prisma');
 const { sendBookingConfirmation, sendBookingNotification } = require('../utils/email');
 
 const router = express.Router();
@@ -68,13 +68,25 @@ const bookingValidation = [
 // GET /api/bookings - Get all bookings (for admin)
 router.get('/', async (req, res) => {
   try {
-    const result = await pool.query(
-      'SELECT id, navn, email, telefon, ønsket_dato, ønsket_tid, behandling_type, besked, status, created_at FROM bookings ORDER BY created_at DESC'
-    );
+    const bookings = await prisma.booking.findMany({
+      orderBy: { created_at: 'desc' },
+      select: {
+        id: true,
+        navn: true,
+        email: true,
+        telefon: true,
+        ønsket_dato: true,
+        ønsket_tid: true,
+        behandling_type: true,
+        besked: true,
+        status: true,
+        created_at: true
+      }
+    });
     
     res.json({
       success: true,
-      bookings: result.rows
+      bookings
     });
   } catch (err) {
     console.error('Database error:', err);
@@ -109,12 +121,16 @@ router.post('/', bookingLimiter, bookingValidation, async (req, res) => {
 
     // Check if the requested date is blocked
     if (ønsket_dato) {
-      const blockedCheck = await pool.query(
-        'SELECT id FROM blocked_dates WHERE $1 BETWEEN start_date AND COALESCE(end_date, start_date)',
-        [ønsket_dato]
-      );
+      const blockedCheck = await prisma.blockedDate.findFirst({
+        where: {
+          AND: [
+            { start_date: { lte: new Date(ønsket_dato) } },
+            { end_date: { gte: new Date(ønsket_dato) } }
+          ]
+        }
+      });
       
-      if (blockedCheck.rows.length > 0) {
+      if (blockedCheck) {
         return res.status(400).json({
           error: 'Den valgte dato er ikke tilgængelig for booking. Vælg venligst en anden dato.'
         });
@@ -123,12 +139,15 @@ router.post('/', bookingLimiter, bookingValidation, async (req, res) => {
 
     // Check for time conflicts
     if (ønsket_dato && ønsket_tid) {
-      const conflictCheck = await pool.query(
-        'SELECT id FROM bookings WHERE ønsket_dato = $1 AND ønsket_tid = $2 AND status != $3',
-        [ønsket_dato, ønsket_tid, 'cancelled']
-      );
+      const conflictCheck = await prisma.booking.findFirst({
+        where: {
+          ønsket_dato: new Date(ønsket_dato),
+          ønsket_tid,
+          NOT: { status: 'cancelled' }
+        }
+      });
       
-      if (conflictCheck.rows.length > 0) {
+      if (conflictCheck) {
         return res.status(400).json({
           error: 'Det valgte tidspunkt er allerede optaget. Vælg venligst et andet tidspunkt.'
         });
@@ -136,15 +155,18 @@ router.post('/', bookingLimiter, bookingValidation, async (req, res) => {
     }
 
     // Insert booking into database
-    const result = await pool.query(
-      `INSERT INTO bookings 
-       (navn, email, telefon, ønsket_dato, ønsket_tid, behandling_type, besked, gdpr_samtykke) 
-       VALUES ($1, $2, $3, $4, $5, $6, $7, $8) 
-       RETURNING id, created_at`,
-      [navn, email, telefon, ønsket_dato, ønsket_tid, behandling_type, besked, gdpr_samtykke]
-    );
-
-    const booking = result.rows[0];
+    const booking = await prisma.booking.create({
+      data: {
+        navn,
+        email,
+        telefon,
+        ønsket_dato: ønsket_dato ? new Date(ønsket_dato) : null,
+        ønsket_tid,
+        behandling_type,
+        besked,
+        gdpr_samtykke: gdpr_samtykke === 'true' || gdpr_samtykke === true
+      }
+    });
 
     // Send emails
     try {
@@ -202,12 +224,12 @@ router.put('/:id/status', async (req, res) => {
       });
     }
 
-    const result = await pool.query(
-      'UPDATE bookings SET status = $1 WHERE id = $2 RETURNING *',
-      [status, id]
-    );
+    const result = await prisma.booking.update({
+      where: { id: parseInt(id) },
+      data: { status }
+    });
 
-    if (result.rows.length === 0) {
+    if (!result) {
       return res.status(404).json({
         error: 'Booking ikke fundet'
       });
@@ -215,7 +237,7 @@ router.put('/:id/status', async (req, res) => {
 
     res.json({
       success: true,
-      booking: result.rows[0]
+      booking: result
     });
 
   } catch (err) {

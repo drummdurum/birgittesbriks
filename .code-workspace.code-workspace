@@ -3,6 +3,10 @@
 		{
 			"name": "/ — byhand",
 			"uri": "ftp://byhand/"
+		},
+		{
+			"path": "../brandbyhand"
 		}
-	]
+	],
+	"settings": {}
 }

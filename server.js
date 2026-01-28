@@ -8,9 +8,10 @@ const rateLimit = require('express-rate-limit');
 require('dotenv').config();
 
 // Import database and routes
-const { pool, testConnection } = require('./database/connection');
+const { prisma, pool, testConnection } = require('./database/prisma');
 const { initDatabase } = require('./database/init');
 const bookingsRouter = require('./routes/bookings');
+const pagesRouter = require('./routes/pages');
 
 const app = express();
 const PORT = process.env.PORT || 3000;
@@ -75,34 +76,24 @@ app.use(express.static(path.join(__dirname, 'public')));
 app.use('/api/bookings', bookingsRouter);
 app.use('/api/admin', require('./routes/admin'));
 
+// Page routes
+app.use('/', pagesRouter);
+
 // Public API for blocked dates (for booking form)
 app.get('/api/blocked-dates', async (req, res) => {
     try {
-        const result = await pool.query(
-            'SELECT start_date, end_date FROM blocked_dates ORDER BY start_date ASC'
-        );
-        res.json(result.rows);
+        const blockedDates = await prisma.blockedDate.findMany({
+            orderBy: { start_date: 'asc' },
+            select: {
+                start_date: true,
+                end_date: true
+            }
+        });
+        res.json(blockedDates);
     } catch (error) {
         console.error('Error fetching blocked dates:', error);
         res.status(500).json({ error: 'Kunne ikke hente blokerede datoer' });
     }
-});
-
-// Page routes
-app.get('/', (req, res) => {
-    res.sendFile(path.join(__dirname, 'public', 'index.html'));
-});
-
-app.get('/booking', (req, res) => {
-    res.sendFile(path.join(__dirname, 'public', 'booking.html'));
-});
-
-app.get('/booking-confirmation', (req, res) => {
-    res.sendFile(path.join(__dirname, 'public', 'booking.html'));
-});
-
-app.get('/admin', (req, res) => {
-    res.sendFile(path.join(__dirname, 'public', 'admin.html'));
 });
 
 // Health check endpoint

@@ -1,5 +1,6 @@
 const express = require('express');
 const bcrypt = require('bcrypt');
+const { prisma } = require('../database/prisma');
 const router = express.Router();
 
 // Middleware to check if user is authenticated as admin
@@ -61,12 +62,11 @@ router.get('/auth-status', (req, res) => {
 // Get all bookings
 router.get('/bookings', requireAdmin, async (req, res) => {
     try {
-        const { pool } = require('../database/connection');
-        const result = await pool.query(
-            'SELECT * FROM bookings ORDER BY created_at DESC'
-        );
+        const bookings = await prisma.booking.findMany({
+            orderBy: { created_at: 'desc' }
+        });
         
-        res.json(result.rows);
+        res.json(bookings);
     } catch (error) {
         console.error('Error fetching bookings:', error);
         res.status(500).json({ 
@@ -79,7 +79,6 @@ router.get('/bookings', requireAdmin, async (req, res) => {
 // Create manual booking
 router.post('/bookings', requireAdmin, async (req, res) => {
     try {
-        const { pool } = require('../database/connection');
         const {
             navn,
             telefon,
@@ -100,12 +99,15 @@ router.post('/bookings', requireAdmin, async (req, res) => {
         }
         
         // Check for conflicts
-        const conflictCheck = await pool.query(
-            'SELECT id FROM bookings WHERE ønsket_dato = $1 AND ønsket_tid = $2 AND status != $3',
-            [ønsket_dato, ønsket_tid, 'cancelled']
-        );
+        const conflictCheck = await prisma.booking.findFirst({
+            where: {
+                ønsket_dato: new Date(ønsket_dato),
+                ønsket_tid,
+                NOT: { status: 'cancelled' }
+            }
+        });
         
-        if (conflictCheck.rows.length > 0) {
+        if (conflictCheck) {
             return res.status(400).json({
                 success: false,
                 message: 'Der er allerede en booking på dette tidspunkt'
@@ -113,12 +115,16 @@ router.post('/bookings', requireAdmin, async (req, res) => {
         }
         
         // Check if date is blocked
-        const blockCheck = await pool.query(
-            'SELECT id FROM blocked_dates WHERE $1 BETWEEN start_date AND COALESCE(end_date, start_date)',
-            [ønsket_dato]
-        );
+        const blockCheck = await prisma.blockedDate.findFirst({
+            where: {
+                AND: [
+                    { start_date: { lte: new Date(ønsket_dato) } },
+                    { end_date: { gte: new Date(ønsket_dato) } }
+                ]
+            }
+        });
         
-        if (blockCheck.rows.length > 0) {
+        if (blockCheck) {
             return res.status(400).json({
                 success: false,
                 message: 'Denne dato er blokeret og kan ikke bookes'
@@ -126,17 +132,23 @@ router.post('/bookings', requireAdmin, async (req, res) => {
         }
         
         // Insert booking
-        const result = await pool.query(`
-            INSERT INTO bookings (
-                navn, telefon, email, ønsket_dato, ønsket_tid, 
-                behandling_type, besked, status, created_by_admin
-            ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9) 
-            RETURNING *
-        `, [navn, telefon, email, ønsket_dato, ønsket_tid, behandling_type, besked, status, true]);
+        const booking = await prisma.booking.create({
+            data: {
+                navn,
+                telefon,
+                email: email || null,
+                ønsket_dato: new Date(ønsket_dato),
+                ønsket_tid,
+                behandling_type,
+                besked: besked || null,
+                status,
+                created_by_admin: true
+            }
+        });
         
         res.json({
             success: true,
-            booking: result.rows[0],
+            booking,
             message: 'Manuel booking oprettet succesfuldt'
         });
         
@@ -152,16 +164,15 @@ router.post('/bookings', requireAdmin, async (req, res) => {
 // Update booking status
 router.put('/bookings/:id/status', requireAdmin, async (req, res) => {
     try {
-        const { pool } = require('../database/connection');
         const { id } = req.params;
         const { status } = req.body;
         
-        const result = await pool.query(
-            'UPDATE bookings SET status = $1 WHERE id = $2 RETURNING *',
-            [status, id]
-        );
+        const booking = await prisma.booking.update({
+            where: { id: parseInt(id) },
+            data: { status }
+        });
         
-        if (result.rows.length === 0) {
+        if (!booking) {
             return res.status(404).json({
                 success: false,
                 message: 'Booking ikke fundet'
@@ -170,7 +181,7 @@ router.put('/bookings/:id/status', requireAdmin, async (req, res) => {
         
         res.json({
             success: true,
-            booking: result.rows[0],
+            booking,
             message: `Booking ${status === 'confirmed' ? 'bekræftet' : 'annulleret'}`
         });
         
@@ -186,12 +197,11 @@ router.put('/bookings/:id/status', requireAdmin, async (req, res) => {
 // Get blocked dates
 router.get('/blocked-dates', requireAdmin, async (req, res) => {
     try {
-        const { pool } = require('../database/connection');
-        const result = await pool.query(
-            'SELECT * FROM blocked_dates ORDER BY start_date ASC'
-        );
+        const blockedDates = await prisma.blockedDate.findMany({
+            orderBy: { start_date: 'asc' }
+        });
         
-        res.json(result.rows);
+        res.json(blockedDates);
     } catch (error) {
         console.error('Error fetching blocked dates:', error);
         res.status(500).json({
@@ -204,7 +214,6 @@ router.get('/blocked-dates', requireAdmin, async (req, res) => {
 // Block date/period
 router.post('/blocked-dates', requireAdmin, async (req, res) => {
     try {
-        const { pool } = require('../database/connection');
         const { startDate, endDate, reason } = req.body;
         
         if (!startDate) {
@@ -226,29 +235,35 @@ router.post('/blocked-dates', requireAdmin, async (req, res) => {
         }
         
         // Check for existing bookings in the blocked period
-        const existingBookings = await pool.query(`
-            SELECT COUNT(*) as count FROM bookings 
-            WHERE ønsket_dato BETWEEN $1 AND $2 
-            AND status != 'cancelled'
-        `, [startDate, finalEndDate]);
+        const existingBookings = await prisma.booking.count({
+            where: {
+                ønsket_dato: {
+                    gte: new Date(startDate),
+                    lte: new Date(finalEndDate)
+                },
+                NOT: { status: 'cancelled' }
+            }
+        });
         
-        if (existingBookings.rows[0].count > 0) {
+        if (existingBookings > 0) {
             return res.status(400).json({
                 success: false,
-                message: `Der er ${existingBookings.rows[0].count} eksisterende booking(er) i denne periode. Annuller dem først.`
+                message: `Der er ${existingBookings} eksisterende booking(er) i denne periode. Annuller dem først.`
             });
         }
         
         // Insert blocked period
-        const result = await pool.query(`
-            INSERT INTO blocked_dates (start_date, end_date, reason) 
-            VALUES ($1, $2, $3) 
-            RETURNING *
-        `, [startDate, finalEndDate, reason]);
+        const blockedDate = await prisma.blockedDate.create({
+            data: {
+                start_date: new Date(startDate),
+                end_date: new Date(finalEndDate),
+                reason: reason || null
+            }
+        });
         
         res.json({
             success: true,
-            blockedDate: result.rows[0],
+            blockedDate,
             message: 'Periode blokeret succesfuldt'
         });
         
@@ -264,15 +279,13 @@ router.post('/blocked-dates', requireAdmin, async (req, res) => {
 // Remove blocked date
 router.delete('/blocked-dates/:id', requireAdmin, async (req, res) => {
     try {
-        const { pool } = require('../database/connection');
         const { id } = req.params;
         
-        const result = await pool.query(
-            'DELETE FROM blocked_dates WHERE id = $1 RETURNING *',
-            [id]
-        );
+        const deletedDate = await prisma.blockedDate.delete({
+            where: { id: parseInt(id) }
+        });
         
-        if (result.rows.length === 0) {
+        if (!deletedDate) {
             return res.status(404).json({
                 success: false,
                 message: 'Blokeret periode ikke fundet'

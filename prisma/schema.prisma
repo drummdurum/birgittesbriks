@@ -1,0 +1,50 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model Booking {
+  id                Int       @id @default(autoincrement())
+  navn              String    @db.VarChar(100)
+  email             String?   @db.VarChar(255)
+  telefon           String    @db.VarChar(20)
+  ønsket_dato       DateTime? @db.Date
+  ønsket_tid        String?   @db.VarChar(20)
+  behandling_type   String    @default("Enkelt behandling") @db.VarChar(50)
+  besked            String?
+  status            String    @default("pending") @db.VarChar(20)
+  gdpr_samtykke     Boolean   @default(false)
+  created_by_admin  Boolean   @default(false)
+  created_at        DateTime  @default(now())
+  updated_at        DateTime  @updatedAt
+
+  @@index([status])
+  @@index([created_at])
+  @@index([email])
+  @@index([ønsket_dato, ønsket_tid])
+}
+
+model BlockedDate {
+  id         Int       @id @default(autoincrement())
+  start_date DateTime  @db.Date
+  end_date   DateTime? @db.Date
+  reason     String?
+  created_at DateTime  @default(now())
+
+  @@index([start_date, end_date])
+}
+
+model Session {
+  sid    String   @id
+  sess   Json
+  expire DateTime
+
+  @@map("session")
+}
