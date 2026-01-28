@@ -211,7 +211,17 @@ function switchTab(tabName) {
 async function loadBookings() {
     try {
         const response = await fetch('/api/admin/bookings');
+        
+        if (!response.ok) {
+            throw new Error(`HTTP error! status: ${response.status}`);
+        }
+        
         const bookings = await response.json();
+        
+        // Ensure bookings is an array
+        if (!Array.isArray(bookings)) {
+            throw new Error('Invalid response format: expected array');
+        }
         
         const bookingsList = document.getElementById('bookingsList');
         
@@ -344,7 +354,17 @@ async function updateBookingStatus(bookingId, status) {
 async function loadBlockedDates() {
     try {
         const response = await fetch('/api/admin/blocked-dates');
+        
+        if (!response.ok) {
+            throw new Error(`HTTP error! status: ${response.status}`);
+        }
+        
         const blockedDates = await response.json();
+        
+        // Ensure blockedDates is an array
+        if (!Array.isArray(blockedDates)) {
+            throw new Error('Invalid response format: expected array');
+        }
         
         const blockedDatesList = document.getElementById('blockedDatesList');
         

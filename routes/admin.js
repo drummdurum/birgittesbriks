@@ -66,12 +66,23 @@ router.get('/bookings', requireAdmin, async (req, res) => {
             orderBy: { created_at: 'desc' }
         });
         
+        // Ensure we're returning a proper array
+        if (!Array.isArray(bookings)) {
+            console.warn('Warning: bookings response is not an array:', typeof bookings);
+            return res.json([]);
+        }
+        
         res.json(bookings);
     } catch (error) {
-        console.error('Error fetching bookings:', error);
+        console.error('Error fetching bookings - Details:', {
+            message: error.message,
+            code: error.code,
+            stack: error.stack
+        });
         res.status(500).json({ 
             success: false, 
-            message: 'Fejl ved hentning af bookinger' 
+            message: 'Fejl ved hentning af bookinger',
+            error: process.env.NODE_ENV === 'development' ? error.message : undefined
         });
     }
 });
@@ -201,19 +212,23 @@ router.get('/blocked-dates', requireAdmin, async (req, res) => {
             orderBy: { start_date: 'asc' }
         });
         
+        // Ensure we're returning a proper array
+        if (!Array.isArray(blockedDates)) {
+            console.warn('Warning: blockedDates response is not an array:', typeof blockedDates);
+            return res.json([]);
+        }
+        
         res.json(blockedDates);
     } catch (error) {
-        console.error('Error fetching blocked dates:', error);
-        res.status(500).json({
-            success: false,
-            message: 'Fejl ved hentning af blokerede datoer'
+        console.error('Error fetching blocked dates - Details:', {
+            message: error.message,
+            code: error.code,
+            stack: error.stack
         });
-    }
-});
-
-// Block date/period
-router.post('/blocked-dates', requireAdmin, async (req, res) => {
-    try {
+        res.status(500).json({ 
+            success: false, 
+            message: 'Fejl ved hentning af blokerede datoer',
+            error: process.env.NODE_ENV === 'development' ? error.message : undefined
         const { startDate, endDate, reason } = req.body;
         
         if (!startDate) {
