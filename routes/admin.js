@@ -72,7 +72,15 @@ router.get('/bookings', requireAdmin, async (req, res) => {
             return res.json([]);
         }
         
-        res.json(bookings);
+        // Convert Date objects to ISO strings for JSON serialization
+        const serializedBookings = bookings.map(booking => ({
+            ...booking,
+            ønsket_dato: booking.ønsket_dato ? new Date(booking.ønsket_dato).toISOString().split('T')[0] : null,
+            created_at: booking.created_at ? booking.created_at.toISOString() : null,
+            updated_at: booking.updated_at ? booking.updated_at.toISOString() : null
+        }));
+        
+        res.json(serializedBookings);
     } catch (error) {
         console.error('Error fetching bookings - Details:', {
             message: error.message,
@@ -157,9 +165,17 @@ router.post('/bookings', requireAdmin, async (req, res) => {
             }
         });
         
+        // Convert Date objects to ISO strings
+        const serializedBooking = {
+            ...booking,
+            ønsket_dato: booking.ønsket_dato ? new Date(booking.ønsket_dato).toISOString().split('T')[0] : null,
+            created_at: booking.created_at ? booking.created_at.toISOString() : null,
+            updated_at: booking.updated_at ? booking.updated_at.toISOString() : null
+        };
+        
         res.json({
             success: true,
-            booking,
+            booking: serializedBooking,
             message: 'Manuel booking oprettet succesfuldt'
         });
         
@@ -190,9 +206,17 @@ router.put('/bookings/:id/status', requireAdmin, async (req, res) => {
             });
         }
         
+        // Convert Date objects to ISO strings
+        const serializedBooking = {
+            ...booking,
+            ønsket_dato: booking.ønsket_dato ? new Date(booking.ønsket_dato).toISOString().split('T')[0] : null,
+            created_at: booking.created_at ? booking.created_at.toISOString() : null,
+            updated_at: booking.updated_at ? booking.updated_at.toISOString() : null
+        };
+        
         res.json({
             success: true,
-            booking,
+            booking: serializedBooking,
             message: `Booking ${status === 'confirmed' ? 'bekræftet' : 'annulleret'}`
         });
         
@@ -218,7 +242,15 @@ router.get('/blocked-dates', requireAdmin, async (req, res) => {
             return res.json([]);
         }
         
-        res.json(blockedDates);
+        // Convert Date objects to ISO strings for JSON serialization
+        const serializedBlockedDates = blockedDates.map(blocked => ({
+            ...blocked,
+            start_date: blocked.start_date ? new Date(blocked.start_date).toISOString().split('T')[0] : null,
+            end_date: blocked.end_date ? new Date(blocked.end_date).toISOString().split('T')[0] : null,
+            created_at: blocked.created_at ? blocked.created_at.toISOString() : null
+        }));
+        
+        res.json(serializedBlockedDates);
     } catch (error) {
         console.error('Error fetching blocked dates - Details:', {
             message: error.message,
@@ -283,9 +315,17 @@ router.post('/blocked-dates', requireAdmin, async (req, res) => {
             }
         });
         
+        // Convert Date objects to ISO strings
+        const serializedBlockedDate = {
+            ...blockedDate,
+            start_date: blockedDate.start_date ? new Date(blockedDate.start_date).toISOString().split('T')[0] : null,
+            end_date: blockedDate.end_date ? new Date(blockedDate.end_date).toISOString().split('T')[0] : null,
+            created_at: blockedDate.created_at ? blockedDate.created_at.toISOString() : null
+        };
+        
         res.json({
             success: true,
-            blockedDate,
+            blockedDate: serializedBlockedDate,
             message: 'Periode blokeret succesfuldt'
         });
         

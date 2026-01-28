@@ -89,7 +89,14 @@ app.get('/api/blocked-dates', async (req, res) => {
                 end_date: true
             }
         });
-        res.json(blockedDates);
+        
+        // Convert Date objects to ISO strings
+        const serializedBlockedDates = blockedDates.map(blocked => ({
+            start_date: blocked.start_date ? new Date(blocked.start_date).toISOString().split('T')[0] : null,
+            end_date: blocked.end_date ? new Date(blocked.end_date).toISOString().split('T')[0] : null
+        }));
+        
+        res.json(serializedBlockedDates);
     } catch (error) {
         console.error('Error fetching blocked dates:', error);
         res.status(500).json({ error: 'Kunne ikke hente blokerede datoer' });

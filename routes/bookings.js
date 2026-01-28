@@ -84,9 +84,16 @@ router.get('/', async (req, res) => {
       }
     });
     
+    // Convert Date objects to ISO strings
+    const serializedBookings = bookings.map(booking => ({
+      ...booking,
+      ønsket_dato: booking.ønsket_dato ? new Date(booking.ønsket_dato).toISOString().split('T')[0] : null,
+      created_at: booking.created_at ? booking.created_at.toISOString() : null
+    }));
+    
     res.json({
       success: true,
-      bookings
+      bookings: serializedBookings
     });
   } catch (err) {
     console.error('Database error:', err);
@@ -235,9 +242,17 @@ router.put('/:id/status', async (req, res) => {
       });
     }
 
+    // Convert Date objects to ISO strings
+    const serializedBooking = {
+      ...result,
+      ønsket_dato: result.ønsket_dato ? new Date(result.ønsket_dato).toISOString().split('T')[0] : null,
+      created_at: result.created_at ? result.created_at.toISOString() : null,
+      updated_at: result.updated_at ? result.updated_at.toISOString() : null
+    };
+
     res.json({
       success: true,
-      booking: result
+      booking: serializedBooking
     });
 
   } catch (err) {

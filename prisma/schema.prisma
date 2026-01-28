@@ -25,6 +25,7 @@ model Booking {
   created_at        DateTime  @default(now())
   updated_at        DateTime  @updatedAt
 
+  @@map("bookings")
   @@index([status])
   @@index([created_at])
   @@index([email])
@@ -38,6 +39,7 @@ model BlockedDate {
   reason     String?
   created_at DateTime  @default(now())
 
+  @@map("blocked_dates")
   @@index([start_date, end_date])
 }
 
