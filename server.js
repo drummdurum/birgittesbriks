@@ -75,6 +75,10 @@ app.use(express.static(path.join(__dirname, 'public')));
 // API routes
 app.use('/api/bookings', bookingsRouter);
 app.use('/api/admin', require('./routes/admin'));
+// Public mail endpoints (for sending test/confirmation mails from public UI)
+app.use('/api/mail', require('./routes/publicMail'));
+// Availability endpoint to check booked times for a date
+app.use('/api/availability', require('./routes/availability'));
 
 // Page routes
 app.use('/', pagesRouter);

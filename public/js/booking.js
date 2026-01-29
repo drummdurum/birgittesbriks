@@ -252,4 +252,162 @@ document.addEventListener('DOMContentLoaded', function() {
         
         e.target.value = value;
     });
+
+    // Send confirmation email from booking form (without creating a booking)
+    const sendConfirmationBtn = document.getElementById('send-confirmation-btn');
+    const emailStatus = document.getElementById('email-action-status');
+
+    if (sendConfirmationBtn) {
+        sendConfirmationBtn.addEventListener('click', async () => {
+            hideMessages();
+            emailStatus.classList.add('hidden');
+
+            const navnField = document.getElementById('navn');
+            const emailField = document.getElementById('email');
+
+            // Basic client-side validation
+            if (!navnField.value.trim() || navnField.value.trim().length < 2) {
+                emailStatus.textContent = 'Indtast venligst et gyldigt navn før du sender mail.';
+                emailStatus.className = 'text-red-600';
+                emailStatus.classList.remove('hidden');
+                navnField.focus();
+                return;
+            }
+
+            const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+            if (!emailRegex.test(emailField.value.trim())) {
+                emailStatus.textContent = 'Indtast venligst en gyldig e-mailadresse.';
+                emailStatus.className = 'text-red-600';
+                emailStatus.classList.remove('hidden');
+                emailField.focus();
+                return;
+            }
+
+            // Disable button and show loading
+            sendConfirmationBtn.disabled = true;
+            const originalText = sendConfirmationBtn.textContent;
+            sendConfirmationBtn.textContent = 'Sender...';
+
+            try {
+                const payload = {
+                    navn: navnField.value.trim(),
+                    email: emailField.value.trim(),
+                    telefon: document.getElementById('telefon').value.trim() || null,
+                    ønsket_dato: document.getElementById('ønsket_dato').value || null,
+                    ønsket_tid: document.getElementById('ønsket_tid').value || null,
+                    behandling_type: document.getElementById('behandling_type').value || null,
+                    besked: document.getElementById('besked').value.trim() || null
+                };
+
+                const res = await fetch('/api/mail/confirmation', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(payload)
+                });
+
+                const data = await res.json();
+
+                if (res.ok) {
+                    emailStatus.textContent = data.message || 'Bekræftelsesmail sendt.';
+                    emailStatus.className = 'text-green-600';
+                    emailStatus.classList.remove('hidden');
+                } else {
+                    emailStatus.textContent = data.error || 'Kunne ikke sende mail. Prøv igen senere.';
+                    emailStatus.className = 'text-red-600';
+                    emailStatus.classList.remove('hidden');
+                }
+            } catch (err) {
+                console.error('Error sending confirmation email from form:', err);
+                emailStatus.textContent = 'Der opstod en netværksfejl. Prøv igen.';
+                emailStatus.className = 'text-red-600';
+                emailStatus.classList.remove('hidden');
+            } finally {
+                sendConfirmationBtn.disabled = false;
+                sendConfirmationBtn.textContent = originalText;
+            }
+        });
+    }
+
+    // Availability: when date changes, fetch booked times and update time options
+    const timeSelect = document.getElementById('ønsket_tid');
+    const availabilityMsg = document.getElementById('availability-msg');
+
+    async function updateAvailabilityForDate(date) {
+        if (!date) {
+            // reset
+            Array.from(timeSelect.options).forEach(opt => {
+                opt.disabled = false;
+                opt.textContent = opt.value || 'Vælg tidspunkt';
+                opt.classList.remove('opacity-50');
+            });
+            availabilityMsg.classList.add('hidden');
+            return;
+        }
+
+        try {
+            const res = await fetch(`/api/availability?date=${encodeURIComponent(date)}`);
+            const data = await res.json();
+
+            if (!res.ok) {
+                console.warn('Availability fetch error:', data);
+                availabilityMsg.textContent = 'Kunne ikke hente tilgængelighed.';
+                availabilityMsg.className = 'text-red-600';
+                availabilityMsg.classList.remove('hidden');
+                return;
+            }
+
+            if (data.blocked) {
+                // If entire day blocked
+                Array.from(timeSelect.options).forEach(opt => {
+                    if (opt.value) opt.disabled = true;
+                });
+                availabilityMsg.textContent = 'Denne dato er blokeret og kan ikke bookes.';
+                availabilityMsg.className = 'text-red-600';
+                availabilityMsg.classList.remove('hidden');
+                return;
+            }
+
+            const booked = data.bookedTimes || [];
+
+            let anyAvailable = false;
+            Array.from(timeSelect.options).forEach(opt => {
+                if (!opt.value) return; // skip placeholder
+                if (booked.includes(opt.value)) {
+                    opt.disabled = true;
+                    opt.textContent = `${opt.value} – Optaget`;
+                    opt.classList.add('opacity-50');
+                } else {
+                    opt.disabled = false;
+                    opt.textContent = opt.value;
+                    opt.classList.remove('opacity-50');
+                    anyAvailable = true;
+                }
+            });
+
+            if (!anyAvailable) {
+                availabilityMsg.textContent = 'Ingen ledige tider på denne dato.';
+                availabilityMsg.className = 'text-red-600';
+                availabilityMsg.classList.remove('hidden');
+            } else {
+                availabilityMsg.textContent = 'Viser ledige tider — optagede tidspunkter er skjult/disabled.';
+                availabilityMsg.className = 'text-gray-600';
+                availabilityMsg.classList.remove('hidden');
+            }
+        } catch (err) {
+            console.error('Error fetching availability:', err);
+            availabilityMsg.textContent = 'Der opstod en fejl ved hentning af tilgængelighed.';
+            availabilityMsg.className = 'text-red-600';
+            availabilityMsg.classList.remove('hidden');
+        }
+    }
+
+    if (dateInput) {
+        dateInput.addEventListener('change', (e) => {
+            const dateVal = e.target.value;
+            updateAvailabilityForDate(dateVal);
+        });
+
+        // Initialize availability for current value (if any)
+        if (dateInput.value) updateAvailabilityForDate(dateInput.value);
+    }
 });

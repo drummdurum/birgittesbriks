@@ -164,18 +164,31 @@ router.post('/', bookingLimiter, bookingValidation, async (req, res) => {
     }
 
     // Insert booking into database
-    const booking = await prisma.booking.create({
-      data: {
-        navn,
-        email,
-        telefon,
-        ønsket_dato: ønsket_dato ? new Date(ønsket_dato) : null,
-        ønsket_tid,
-        behandling_type,
-        besked,
-        gdpr_samtykke: gdpr_samtykke === 'true' || gdpr_samtykke === true
+    let booking;
+    try {
+      booking = await prisma.booking.create({
+        data: {
+          navn,
+          email,
+          telefon,
+          ønsket_dato: ønsket_dato ? new Date(ønsket_dato) : null,
+          ønsket_tid,
+          behandling_type,
+          besked,
+          gdpr_samtykke: gdpr_samtykke === 'true' || gdpr_samtykke === true
+        }
+      });
+    } catch (createErr) {
+      // Handle unique constraint violations (Prisma error code P2002 or SQL duplicate key)
+      if ((createErr && createErr.code === 'P2002') || (createErr && /duplicate key/i.test(createErr.message))) {
+        return res.status(400).json({
+          error: 'Det valgte tidspunkt er allerede optaget. Vælg venligst et andet tidspunkt.'
+        });
       }
-    });
+
+      // Otherwise rethrow to be handled by outer catch
+      throw createErr;
+    }
 
     // Send emails
     try {
