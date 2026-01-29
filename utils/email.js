@@ -253,10 +253,16 @@ const sendBookingFinalConfirmation = async (booking) => {
 const sendBookingNotification = async (booking) => {
   const template = getAdminNotificationTemplate(booking);
 
+  // Determine recipient (allow override with NOTIFICATION_EMAIL, otherwise use FROM_EMAIL or RESEND_FROM)
+  const toEmail = process.env.NOTIFICATION_EMAIL || process.env.FROM_EMAIL || process.env.RESEND_FROM;
+  if (!toEmail) {
+    throw new Error('Ingen admin-modtager konfigureret. Sæt NOTIFICATION_EMAIL eller FROM_EMAIL i miljøet.');
+  }
+
   if (process.env.RESEND_API_KEY) {
     return await sendEmailResend({
       from: process.env.RESEND_FROM || process.env.FROM_EMAIL,
-      to: process.env.FROM_EMAIL,
+      to: toEmail,
       subject: template.subject,
       html: template.html
     });
@@ -264,7 +270,7 @@ const sendBookingNotification = async (booking) => {
   
   const mailOptions = {
     from: process.env.FROM_EMAIL,
-    to: process.env.FROM_EMAIL, // Send to business email
+    to: toEmail, // Send to business email
     subject: template.subject,
     html: template.html
   };
@@ -274,5 +280,6 @@ const sendBookingNotification = async (booking) => {
 
 module.exports = {
   sendBookingConfirmation,
-  sendBookingNotification
+  sendBookingNotification,
+  sendBookingFinalConfirmation
 };
