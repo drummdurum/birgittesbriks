@@ -366,6 +366,23 @@ async function updateBookingStatus(bookingId, status) {
             loadCompletedBookings(); // Reload færdige tab
             const msg = status === 'confirmed' ? 'bekræftet' : status === 'cancelled' ? 'annulleret' : status === 'completed' ? 'markeret som færdig' : 'opdateret';
             showNotification(`Booking ${msg}`, 'success');
+
+            // If we just confirmed, attempt to send the final confirmation email and show result
+            if (status === 'confirmed') {
+                try {
+                    const mailResp = await fetch(`/api/admin/bookings/${bookingId}/send-final`, { method: 'POST' });
+                    const mailJson = await mailResp.json();
+                    if (mailResp.ok && mailJson.success) {
+                        showNotification('Bekræftelsesmail sendt', 'success');
+                    } else {
+                        console.error('Send-final response error:', mailJson);
+                        showNotification(mailJson.message || 'Kunne ikke sende bekræftelsesmail', 'error');
+                    }
+                } catch (err) {
+                    console.error('Error sending final confirmation:', err);
+                    showNotification('Fejl ved afsendelse af bekræftelsesmail', 'error');
+                }
+            }
         } else {
             showNotification('Fejl ved opdatering af booking', 'error');
         }

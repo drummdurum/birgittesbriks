@@ -253,6 +253,45 @@ router.put('/bookings/:id/status', requireAdmin, async (req, res) => {
     }
 });
 
+// Trigger sending final confirmation email for a booking (admin)
+router.post('/bookings/:id/send-final', requireAdmin, async (req, res) => {
+    try {
+        const { id } = req.params;
+        const booking = await prisma.booking.findUnique({ where: { id: parseInt(id) } });
+
+        if (!booking) {
+            return res.status(404).json({ success: false, message: 'Booking ikke fundet' });
+        }
+
+        if (!booking.email) {
+            return res.status(400).json({ success: false, message: 'Booking har ingen email' });
+        }
+
+        // Send email and return result (failures reported)
+        try {
+            await sendBookingFinalConfirmation({
+                navn: booking.navn,
+                email: booking.email,
+                telefon: booking.telefon,
+                ønsket_dato: booking.ønsket_dato ? new Date(booking.ønsket_dato).toISOString().split('T')[0] : null,
+                ønsket_tid: booking.ønsket_tid,
+                behandling_type: booking.behandling_type,
+                besked: booking.besked,
+                bookingId: booking.id
+            });
+
+            return res.json({ success: true, message: 'Bekræftelsesmail sendt' });
+        } catch (emailErr) {
+            console.error('Error sending final confirmation email (admin send):', emailErr);
+            return res.status(500).json({ success: false, message: 'Fejl ved afsendelse af bekræftelsesmail', error: emailErr.message });
+        }
+
+    } catch (error) {
+        console.error('Error in send-final route:', error);
+        res.status(500).json({ success: false, message: 'Serverfejl' });
+    }
+});
+
 // Get blocked dates
 router.get('/blocked-dates', requireAdmin, async (req, res) => {
     try {
