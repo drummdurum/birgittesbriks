@@ -96,6 +96,11 @@
                                 ➕ <span class="hidden sm:inline">Manuel booking</span>
                             </span>
                         </button>
+                        <button class="tab-btn flex-1 py-3 px-4 rounded-lg text-gray-600 hover:text-gray-800 hover:bg-gray-100 font-medium transition-colors" data-tab="completed">
+                            <span class="flex items-center justify-center gap-2">
+                                ✅ <span class="hidden sm:inline">Færdige</span>
+                            </span>
+                        </button>
                     </nav>
                 </div>
             </div>
@@ -130,6 +135,29 @@
                                         <p class="text-gray-500">Vælg en dag til venstre for at se bookinger</p>
                                     </div>
                                 </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Completed Bookings Tab -->
+            <div id="completedTab" class="tab-content hidden">
+                <div class="admin-card" style="padding: 0; overflow: hidden;">
+                    <div class="bg-gradient-to-r from-gray-600 to-gray-700 p-6 text-white">
+                        <div class="flex items-center justify-between">
+                            <div>
+                                <h2 class="text-2xl font-medium">Færdige bookinger</h2>
+                                <p class="opacity-90 mt-1">Oversigt over alle færdigmarkerede bookinger</p>
+                            </div>
+                            <div class="text-3xl">✅</div>
+                        </div>
+                    </div>
+                    <div class="p-6">
+                        <div id="completedList" class="space-y-3 max-h-96 overflow-y-auto">
+                            <div class="flex items-center justify-center py-8">
+                                <div class="animate-spin rounded-full h-6 w-6 border-b-2 border-gray-600"></div>
+                                <span class="ml-3 text-gray-600">Indlæser...</span>
                             </div>
                         </div>
                     </div>

@@ -103,6 +103,7 @@ async function checkAuthStatus() {
             showDashboard();
             loadBookings();
             loadBlockedDates();
+            loadCompletedBookings();
         } else {
             showLogin();
         }
@@ -138,6 +139,7 @@ async function handleLogin(e) {
             showDashboard();
             loadBookings();
             loadBlockedDates();
+            loadCompletedBookings();
             loginForm.reset();
             hideError();
         } else {
@@ -208,6 +210,8 @@ function switchTab(tabName) {
         loadBookings();
     } else if (tabName === 'blocked-dates') {
         loadBlockedDates();
+    } else if (tabName === 'completed') {
+        loadCompletedBookings();
     }
 }
 
@@ -229,14 +233,17 @@ async function loadBookings() {
         const bookingDaysEl = document.getElementById('bookingDays');
         const bookingsOfDayEl = document.getElementById('bookingsOfDay');
 
-        if (bookings.length === 0) {
-            bookingDaysEl.innerHTML = `<div class="text-center py-8"><div class="text-4xl mb-3">📝</div><p class="text-gray-500">Ingen bookinger endnu</p></div>`;
+        // Only consider ufærdige bookings for the days list and per-day view
+        const incompleteBookings = bookings.filter(b => !b.completed);
+
+        if (incompleteBookings.length === 0) {
+            bookingDaysEl.innerHTML = `<div class="text-center py-8"><div class="text-4xl mb-3">📝</div><p class="text-gray-500">Ingen ufærdige bookinger</p></div>`;
             bookingsOfDayEl.innerHTML = '';
             return;
         }
 
         // Group by ønsket_dato
-        const grouped = bookings.reduce((acc, b) => {
+        const grouped = incompleteBookings.reduce((acc, b) => {
             const date = b.ønsket_dato;
             if (!acc[date]) acc[date] = [];
             acc[date].push(b);
@@ -275,6 +282,43 @@ async function loadBookings() {
     } catch (error) {
         console.error('Error loading bookings:', error);
         document.getElementById('bookingsList').innerHTML = '<p class="text-red-500 text-center py-8">Fejl ved indlæsning af bookinger.</p>';
+    }
+}
+
+// Load and render completed bookings into the Completed tab
+async function loadCompletedBookings() {
+    try {
+        const response = await fetch('/api/admin/bookings');
+        if (!response.ok) throw new Error(`HTTP error! status: ${response.status}`);
+        const bookings = await response.json();
+        const completed = bookings.filter(b => b.completed);
+        const container = document.getElementById('completedList');
+
+        if (!Array.isArray(completed) || completed.length === 0) {
+            container.innerHTML = `<div class="text-center py-8"><div class="text-4xl mb-3">✅</div><p class="text-gray-500">Ingen færdige bookinger</p></div>`;
+            return;
+        }
+
+        container.innerHTML = completed.map(booking => `
+            <div class="admin-card p-4 border-l-4 border-gray-500">
+                <div class="flex justify-between items-start mb-2">
+                    <div>
+                        <h4 class="font-medium text-lg">${booking.navn}</h4>
+                        <p class="text-sm text-gray-500">Booking #${booking.id} · ${formatDate(booking.ønsket_dato)} · kl. ${booking.ønsket_tid}</p>
+                    </div>
+                    <div class="text-sm status-badge status-completed">Færdig</div>
+                </div>
+                <div class="text-sm text-gray-700 mb-3">
+                    <div>📞 ${booking.telefon}</div>
+                    ${booking.email ? `<div>✉️ ${booking.email}</div>` : ''}
+                    <div>💆‍♀️ ${booking.behandling_type}</div>
+                    ${booking.besked ? `<div class="mt-2">💬 ${booking.besked}</div>` : ''}
+                </div>
+            </div>
+        `).join('');
+    } catch (error) {
+        console.error('Error loading completed bookings:', error);
+        document.getElementById('completedList').innerHTML = '<p class="text-red-500 text-center py-4">Fejl ved indlæsning af færdige bookinger.</p>';
     }
 }
 
@@ -318,7 +362,8 @@ async function updateBookingStatus(bookingId, status) {
         const result = await response.json();
         
         if (result.success) {
-            loadBookings(); // Reload the bookings list
+            loadBookings(); // Reload the bookings list (shows only ufærdige)
+            loadCompletedBookings(); // Reload færdige tab
             const msg = status === 'confirmed' ? 'bekræftet' : status === 'cancelled' ? 'annulleret' : status === 'completed' ? 'markeret som færdig' : 'opdateret';
             showNotification(`Booking ${msg}`, 'success');
         } else {

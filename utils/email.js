@@ -142,9 +142,21 @@ const getAdminNotificationTemplate = (booking) => {
   };
 };
 
+const { sendEmailResend } = require('./resend');
+
 // Send confirmation email to customer
 const sendBookingConfirmation = async (booking) => {
   const template = getCustomerConfirmationTemplate(booking);
+
+  // If Resend is configured, prefer it
+  if (process.env.RESEND_API_KEY && booking.email) {
+    return await sendEmailResend({
+      from: process.env.RESEND_FROM || process.env.FROM_EMAIL,
+      to: booking.email,
+      subject: template.subject,
+      html: template.html
+    });
+  }
   
   const mailOptions = {
     from: process.env.FROM_EMAIL,
@@ -159,6 +171,15 @@ const sendBookingConfirmation = async (booking) => {
 // Send notification email to admin
 const sendBookingNotification = async (booking) => {
   const template = getAdminNotificationTemplate(booking);
+
+  if (process.env.RESEND_API_KEY) {
+    return await sendEmailResend({
+      from: process.env.RESEND_FROM || process.env.FROM_EMAIL,
+      to: process.env.FROM_EMAIL,
+      subject: template.subject,
+      html: template.html
+    });
+  }
   
   const mailOptions = {
     from: process.env.FROM_EMAIL,

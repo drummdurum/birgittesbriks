@@ -268,6 +268,10 @@ router.get('/blocked-dates', requireAdmin, async (req, res) => {
     }
 });
 
+// Attach mail router (Resend support)
+router.use('/mail', require('./mail'));
+
+
 // Block date/period
 router.post('/blocked-dates', requireAdmin, async (req, res) => {
     try {
