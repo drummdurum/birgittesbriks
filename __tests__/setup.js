@@ -25,7 +25,8 @@ jest.mock('../database/prisma', () => ({
 
 jest.mock('../utils/email', () => ({
   sendBookingConfirmation: jest.fn().mockResolvedValue(true),
-  sendBookingNotification: jest.fn().mockResolvedValue(true)
+  sendBookingNotification: jest.fn().mockResolvedValue(true),
+  sendBookingFinalConfirmation: jest.fn().mockResolvedValue(true)
 }));
 
 // Mock express-rate-limit to disable it for testing

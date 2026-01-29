@@ -1,6 +1,7 @@
 const express = require('express');
 const bcrypt = require('bcrypt');
 const { prisma } = require('../database/prisma');
+const { sendBookingFinalConfirmation } = require('../utils/email');
 const router = express.Router();
 
 // Middleware to check if user is authenticated as admin
@@ -210,13 +211,33 @@ router.put('/bookings/:id/status', requireAdmin, async (req, res) => {
         }
         
         // Convert Date objects to ISO strings
-        const serializedBooking = {
+            const serializedBooking = {
             ...booking,
             ønsket_dato: booking.ønsket_dato ? new Date(booking.ønsket_dato).toISOString().split('T')[0] : null,
             created_at: booking.created_at ? booking.created_at.toISOString() : null,
             updated_at: booking.updated_at ? booking.updated_at.toISOString() : null
         };
-        
+
+        // If booking was just confirmed, send final confirmation email to customer (do not fail on email errors)
+        if (status === 'confirmed') {
+            (async () => {
+                try {
+                    await sendBookingFinalConfirmation({
+                        navn: serializedBooking.navn,
+                        email: serializedBooking.email,
+                        telefon: serializedBooking.telefon,
+                        ønsket_dato: serializedBooking.ønsket_dato,
+                        ønsket_tid: serializedBooking.ønsket_tid,
+                        behandling_type: serializedBooking.behandling_type,
+                        besked: serializedBooking.besked,
+                        bookingId: serializedBooking.id
+                    });
+                } catch (emailErr) {
+                    console.error('Error sending final confirmation email:', emailErr);
+                }
+            })();
+        }
+
         res.json({
             success: true,
             booking: serializedBooking,
