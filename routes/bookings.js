@@ -128,6 +128,18 @@ router.post('/', bookingLimiter, bookingValidation, async (req, res) => {
       gdpr_samtykke
     } = req.body;
 
+    // Check if the requested date is a weekend
+    if (ønsket_dato) {
+      const requestedDate = new Date(ønsket_dato);
+      const dayOfWeek = requestedDate.getDay(); // 0 = Sunday, 6 = Saturday
+      
+      if (dayOfWeek === 0 || dayOfWeek === 6) {
+        return res.status(400).json({
+          error: 'Booking i weekenden er ikke mulig. Vælg venligst en hverdag (mandag-fredag).'
+        });
+      }
+    }
+
     // Check if the requested date is blocked
     if (ønsket_dato) {
       const blockedCheck = await prisma.blockedDate.findFirst({
