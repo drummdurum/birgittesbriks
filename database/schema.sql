@@ -26,6 +26,16 @@ CREATE TABLE IF NOT EXISTS blocked_dates (
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
 
+-- Create blocked_times table for admin to block specific time slots
+CREATE TABLE IF NOT EXISTS blocked_times (
+    id SERIAL PRIMARY KEY,
+    date DATE NOT NULL,
+    time VARCHAR(20) NOT NULL,
+    reason TEXT,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    UNIQUE (date, time)
+);
+
 -- Create sessions table for express-session
 CREATE TABLE IF NOT EXISTS session (
     sid VARCHAR NOT NULL COLLATE "default" PRIMARY KEY,
@@ -40,6 +50,7 @@ CREATE INDEX IF NOT EXISTS idx_bookings_created_at ON bookings(created_at);
 CREATE INDEX IF NOT EXISTS idx_bookings_email ON bookings(email);
 CREATE INDEX IF NOT EXISTS idx_bookings_date_time ON bookings(ønsket_dato, ønsket_tid);
 CREATE INDEX IF NOT EXISTS idx_blocked_dates_range ON blocked_dates(start_date, end_date);
+CREATE INDEX IF NOT EXISTS idx_blocked_times_date_time ON blocked_times(date, time);
 
 -- Create trigger to update updated_at timestamp
 CREATE OR REPLACE FUNCTION update_updated_at_column()

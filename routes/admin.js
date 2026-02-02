@@ -150,6 +150,21 @@ router.post('/bookings', requireAdmin, async (req, res) => {
                 message: 'Denne dato er blokeret og kan ikke bookes'
             });
         }
+
+        // Check if time is blocked
+        const blockTimeCheck = await prisma.blockedTime.findFirst({
+            where: {
+                date: new Date(ønsket_dato),
+                time: ønsket_tid
+            }
+        });
+
+        if (blockTimeCheck) {
+            return res.status(400).json({
+                success: false,
+                message: 'Dette tidspunkt er blokeret og kan ikke bookes'
+            });
+        }
         
         // Insert booking
         const booking = await prisma.booking.create({
@@ -451,6 +466,150 @@ router.delete('/blocked-dates/:id', requireAdmin, async (req, res) => {
         res.status(500).json({
             success: false,
             message: 'Fejl ved fjernelse af blokeret periode'
+        });
+    }
+});
+
+// Get blocked times
+router.get('/blocked-times', requireAdmin, async (req, res) => {
+    try {
+        const blockedTimes = await prisma.blockedTime.findMany({
+            orderBy: [{ date: 'asc' }, { time: 'asc' }]
+        });
+
+        if (!Array.isArray(blockedTimes)) {
+            console.warn('Warning: blockedTimes response is not an array:', typeof blockedTimes);
+            return res.json([]);
+        }
+
+        const serialized = blockedTimes.map(blocked => ({
+            ...blocked,
+            date: blocked.date ? new Date(blocked.date).toISOString().split('T')[0] : null,
+            created_at: blocked.created_at ? blocked.created_at.toISOString() : null
+        }));
+
+        res.json(serialized);
+    } catch (error) {
+        console.error('Error fetching blocked times:', error);
+        res.status(500).json({
+            success: false,
+            message: 'Fejl ved hentning af blokerede tidspunkter'
+        });
+    }
+});
+
+// Block specific time on a date
+router.post('/blocked-times', requireAdmin, async (req, res) => {
+    try {
+        const { date, time, reason } = req.body;
+
+        if (!date || !time) {
+            return res.status(400).json({
+                success: false,
+                message: 'Dato og tidspunkt er påkrævet'
+            });
+        }
+
+        // Check if date is blocked entirely
+        const blockCheck = await prisma.blockedDate.findFirst({
+            where: {
+                AND: [
+                    { start_date: { lte: new Date(date) } },
+                    { end_date: { gte: new Date(date) } }
+                ]
+            }
+        });
+
+        if (blockCheck) {
+            return res.status(400).json({
+                success: false,
+                message: 'Denne dato er allerede blokeret som hel dag'
+            });
+        }
+
+        // Check for existing booking at that time
+        const existingBooking = await prisma.booking.findFirst({
+            where: {
+                ønsket_dato: new Date(date),
+                ønsket_tid: time,
+                NOT: { status: 'cancelled' }
+            }
+        });
+
+        if (existingBooking) {
+            return res.status(400).json({
+                success: false,
+                message: 'Der er allerede en booking på dette tidspunkt'
+            });
+        }
+
+        const existingBlocked = await prisma.blockedTime.findFirst({
+            where: {
+                date: new Date(date),
+                time
+            }
+        });
+
+        if (existingBlocked) {
+            return res.status(400).json({
+                success: false,
+                message: 'Dette tidspunkt er allerede blokeret'
+            });
+        }
+
+        const blockedTime = await prisma.blockedTime.create({
+            data: {
+                date: new Date(date),
+                time,
+                reason: reason || null
+            }
+        });
+
+        const serialized = {
+            ...blockedTime,
+            date: blockedTime.date ? new Date(blockedTime.date).toISOString().split('T')[0] : null,
+            created_at: blockedTime.created_at ? blockedTime.created_at.toISOString() : null
+        };
+
+        res.json({
+            success: true,
+            blockedTime: serialized,
+            message: 'Tidspunkt blokeret succesfuldt'
+        });
+    } catch (error) {
+        console.error('Error blocking time:', error);
+        res.status(500).json({
+            success: false,
+            message: 'Fejl ved blokering af tidspunkt'
+        });
+    }
+});
+
+// Remove blocked time
+router.delete('/blocked-times/:id', requireAdmin, async (req, res) => {
+    try {
+        const { id } = req.params;
+
+        const deletedTime = await prisma.blockedTime.delete({
+            where: { id: parseInt(id) }
+        });
+
+        if (!deletedTime) {
+            return res.status(404).json({
+                success: false,
+                message: 'Blokeret tidspunkt ikke fundet'
+            });
+        }
+
+        res.json({
+            success: true,
+            message: 'Blokeret tidspunkt fjernet succesfuldt'
+        });
+    } catch (error) {
+        console.error('Error removing blocked time:', error);
+        res.status(500).json({
+            success: false,
+            message: 'Fejl ved fjernelse af blokeret tidspunkt'
         });
     }
 });

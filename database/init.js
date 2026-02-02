@@ -36,6 +36,18 @@ const initDatabase = async () => {
         created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
       );
     `);
+
+    // Create blocked_times table if it doesn't exist
+    await pool.query(`
+      CREATE TABLE IF NOT EXISTS blocked_times (
+        id SERIAL PRIMARY KEY,
+        date DATE NOT NULL,
+        time VARCHAR(20) NOT NULL,
+        reason TEXT,
+        created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+        UNIQUE (date, time)
+      );
+    `);
     
     // Create indexes if they don't exist
     await pool.query(`
@@ -44,6 +56,7 @@ const initDatabase = async () => {
       CREATE INDEX IF NOT EXISTS idx_bookings_email ON bookings(email);
       CREATE INDEX IF NOT EXISTS idx_bookings_date_time ON bookings(ønsket_dato, ønsket_tid);
       CREATE INDEX IF NOT EXISTS idx_blocked_dates_range ON blocked_dates(start_date, end_date);
+      CREATE INDEX IF NOT EXISTS idx_blocked_times_date_time ON blocked_times(date, time);
     `);
     
     // Add completed column if it doesn't exist

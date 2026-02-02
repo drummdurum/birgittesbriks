@@ -32,10 +32,12 @@ document.addEventListener('DOMContentLoaded', function() {
         const blockStartDate = document.getElementById('blockStartDate');
         const blockEndDate = document.getElementById('blockEndDate');
         const manualDato = document.getElementById('manualDato');
+        const blockTimeDate = document.getElementById('blockTimeDate');
         
         if (blockStartDate) blockStartDate.min = today;
         if (blockEndDate) blockEndDate.min = today;
         if (manualDato) manualDato.min = today;
+        if (blockTimeDate) blockTimeDate.min = today;
     } catch (error) {
         console.error('Initialization error:', error);
     }
@@ -43,36 +45,48 @@ document.addEventListener('DOMContentLoaded', function() {
 
 // Setup event listeners
 function setupEventListeners() {
+    const safeAddListener = (el, event, handler) => {
+        if (el) {
+            el.addEventListener(event, handler);
+        }
+    };
+
     // Login form
-    loginForm.addEventListener('submit', handleLogin);
+    safeAddListener(loginForm, 'submit', handleLogin);
     
     // Logout button
-    logoutBtn.addEventListener('click', handleLogout);
+    safeAddListener(logoutBtn, 'click', handleLogout);
     
     // Tab switching
     tabBtns.forEach(btn => {
-        btn.addEventListener('click', () => switchTab(btn.dataset.tab));
+        safeAddListener(btn, 'click', () => switchTab(btn.dataset.tab));
     });
     
     // Block date form
-    document.getElementById('blockDateForm').addEventListener('submit', handleBlockDate);
+    safeAddListener(document.getElementById('blockDateForm'), 'submit', handleBlockDate);
     
     // Multiple dates form
-    document.getElementById('blockMultipleDatesForm').addEventListener('submit', handleBlockMultipleDates);
-    document.getElementById('addDateBtn').addEventListener('click', addDateToList);
-    document.getElementById('multipleDatePicker').addEventListener('keypress', function(e) {
+    safeAddListener(document.getElementById('blockMultipleDatesForm'), 'submit', handleBlockMultipleDates);
+    safeAddListener(document.getElementById('addDateBtn'), 'click', addDateToList);
+    safeAddListener(document.getElementById('multipleDatePicker'), 'keypress', function(e) {
         if (e.key === 'Enter') {
             e.preventDefault();
             addDateToList();
         }
     });
+
+    // Block time form
+    safeAddListener(document.getElementById('blockTimeForm'), 'submit', handleBlockTime);
     
     // Manual booking form
-    document.getElementById('manualBookingForm').addEventListener('submit', handleManualBooking);
+    safeAddListener(document.getElementById('manualBookingForm'), 'submit', handleManualBooking);
     
     // Update end date minimum when start date changes
-    document.getElementById('blockStartDate').addEventListener('change', function() {
-        document.getElementById('blockEndDate').min = this.value;
+    safeAddListener(document.getElementById('blockStartDate'), 'change', function() {
+        const blockEndDate = document.getElementById('blockEndDate');
+        if (blockEndDate) {
+            blockEndDate.min = this.value;
+        }
     });
     
     // Event delegation for booking action buttons
@@ -100,6 +114,15 @@ function setupEventListeners() {
                 removeBlockedDate(blockedId);
             }
         }
+
+        if (e.target.classList.contains('blocked-time-action-btn')) {
+            const action = e.target.dataset.action;
+            const blockedId = e.target.dataset.blockedId;
+
+            if (action === 'remove-blocked-time') {
+                removeBlockedTime(blockedId);
+            }
+        }
     });
 }
 
@@ -114,6 +137,7 @@ async function checkAuthStatus() {
             showDashboard();
             loadBookings();
             loadBlockedDates();
+            loadBlockedTimes();
             loadCompletedBookings();
         } else {
             showLogin();
@@ -221,6 +245,7 @@ function switchTab(tabName) {
         loadBookings();
     } else if (tabName === 'blocked-dates') {
         loadBlockedDates();
+        loadBlockedTimes();
     } else if (tabName === 'completed') {
         loadCompletedBookings();
     } else if (tabName === 'cancelled') {
@@ -497,6 +522,58 @@ async function loadBlockedDates() {
     }
 }
 
+// Load blocked times
+async function loadBlockedTimes() {
+    try {
+        const response = await fetch('/api/admin/blocked-times');
+
+        if (!response.ok) {
+            throw new Error(`HTTP error! status: ${response.status}`);
+        }
+
+        const blockedTimes = await response.json();
+
+        if (!Array.isArray(blockedTimes)) {
+            throw new Error('Invalid response format: expected array');
+        }
+
+        const blockedTimesList = document.getElementById('blockedTimesList');
+
+        if (blockedTimes.length === 0) {
+            blockedTimesList.innerHTML = `
+                <div class="text-center py-8">
+                    <div class="text-4xl mb-3">🕒</div>
+                    <h3 class="font-medium text-gray-900 mb-1">Ingen blokerede tidspunkter</h3>
+                    <p class="text-gray-500 text-sm">Tilføj tidspunkter du ikke er tilgængelig</p>
+                </div>
+            `;
+            return;
+        }
+
+        blockedTimesList.innerHTML = blockedTimes.map(blocked => `
+            <div class="flex justify-between items-center p-4 bg-blue-50 border border-blue-200 rounded-lg hover:bg-blue-100 transition-colors">
+                <div class="flex items-center gap-3">
+                    <span class="text-lg">⏰</span>
+                    <div>
+                        <p class="font-medium text-gray-900">
+                            ${formatDate(blocked.date)} · ${blocked.time}
+                        </p>
+                        ${blocked.reason ? `<p class="text-sm text-gray-600">${blocked.reason}</p>` : ''}
+                    </div>
+                </div>
+                <button data-action="remove-blocked-time" data-blocked-id="${blocked.id}" 
+                        class="blocked-time-action-btn bg-blue-600 hover:bg-blue-700 text-white px-3 py-2 rounded-lg text-sm font-medium transition-colors flex items-center gap-1">
+                    🗑️ Fjern
+                </button>
+            </div>
+        `).join('');
+    } catch (error) {
+        console.error('Error loading blocked times:', error);
+        document.getElementById('blockedTimesList').innerHTML = 
+            '<p class="text-red-500 text-center py-4">Fejl ved indlæsning af blokerede tidspunkter.</p>';
+    }
+}
+
 // Handle block date form
 async function handleBlockDate(e) {
     e.preventDefault();
@@ -749,4 +826,64 @@ function showNotification(message, type = 'success') {
     setTimeout(() => {
         notification.remove();
     }, 3000);
+}
+
+// Handle block time form
+async function handleBlockTime(e) {
+    e.preventDefault();
+
+    const formData = new FormData(e.target);
+    const blockData = {
+        date: formData.get('date'),
+        time: formData.get('time'),
+        reason: formData.get('reason') || null
+    };
+
+    try {
+        const response = await fetch('/api/admin/blocked-times', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify(blockData)
+        });
+
+        const result = await response.json();
+
+        if (result.success) {
+            e.target.reset();
+            loadBlockedTimes();
+            showNotification('Tidspunkt blokeret succesfuldt', 'success');
+        } else {
+            showNotification(result.message || 'Fejl ved blokering af tidspunkt', 'error');
+        }
+    } catch (error) {
+        console.error('Error blocking time:', error);
+        showNotification('Fejl ved blokering af tidspunkt', 'error');
+    }
+}
+
+// Remove blocked time
+async function removeBlockedTime(blockedId) {
+    if (!confirm('Er du sikker på at du vil fjerne dette blokerede tidspunkt?')) {
+        return;
+    }
+
+    try {
+        const response = await fetch(`/api/admin/blocked-times/${blockedId}`, {
+            method: 'DELETE'
+        });
+
+        const result = await response.json();
+
+        if (result.success) {
+            loadBlockedTimes();
+            showNotification('Blokeret tidspunkt fjernet', 'success');
+        } else {
+            showNotification('Fejl ved fjernelse af blokeret tidspunkt', 'error');
+        }
+    } catch (error) {
+        console.error('Error removing blocked time:', error);
+        showNotification('Fejl ved fjernelse af blokeret tidspunkt', 'error');
+    }
 }

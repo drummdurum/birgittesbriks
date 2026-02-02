@@ -37,9 +37,16 @@ router.get('/', async (req, res) => {
       select: { ønsket_tid: true }
     });
 
-    const bookedTimes = bookings.map(b => b.ønsket_tid).filter(Boolean);
+    // Find blocked time slots for that date
+    const blockedTimesRows = await prisma.blockedTime.findMany({
+      where: { date: targetDate },
+      select: { time: true }
+    });
 
-    res.json({ blocked: false, bookedTimes });
+    const bookedTimes = bookings.map(b => b.ønsket_tid).filter(Boolean);
+    const blockedTimes = blockedTimesRows.map(b => b.time).filter(Boolean);
+
+    res.json({ blocked: false, bookedTimes, blockedTimes });
   } catch (err) {
     console.error('Error fetching availability:', err);
     res.status(500).json({ error: 'Fejl ved hentning af tilgængelighed' });

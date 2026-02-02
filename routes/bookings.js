@@ -158,6 +158,22 @@ router.post('/', bookingLimiter, bookingValidation, async (req, res) => {
       }
     }
 
+    // Check if the requested time is blocked
+    if (ønsket_dato && ønsket_tid) {
+      const blockedTimeCheck = await prisma.blockedTime.findFirst({
+        where: {
+          date: new Date(ønsket_dato),
+          time: ønsket_tid
+        }
+      });
+
+      if (blockedTimeCheck) {
+        return res.status(400).json({
+          error: 'Det valgte tidspunkt er blokeret. Vælg venligst et andet tidspunkt.'
+        });
+      }
+    }
+
     // Check for time conflicts
     if (ønsket_dato && ønsket_tid) {
       const conflictCheck = await prisma.booking.findFirst({

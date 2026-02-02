@@ -44,6 +44,18 @@ model BlockedDate {
   @@index([start_date, end_date])
 }
 
+model BlockedTime {
+  id         Int      @id @default(autoincrement())
+  date       DateTime @db.Date
+  time       String   @db.VarChar(20)
+  reason     String?
+  created_at DateTime @default(now())
+
+  @@map("blocked_times")
+  @@index([date, time])
+  @@unique([date, time])
+}
+
 model Session {
   sid    String   @id
   sess   Json

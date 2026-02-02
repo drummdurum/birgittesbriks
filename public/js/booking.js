@@ -379,11 +379,12 @@ document.addEventListener('DOMContentLoaded', function() {
             }
 
             const booked = data.bookedTimes || [];
+            const blocked = data.blockedTimes || [];
 
             let anyAvailable = false;
             Array.from(timeSelect.options).forEach(opt => {
                 if (!opt.value) return; // skip placeholder
-                if (booked.includes(opt.value)) {
+                if (booked.includes(opt.value) || blocked.includes(opt.value)) {
                     opt.disabled = true;
                     opt.textContent = `${opt.value} – Optaget`;
                     opt.classList.add('opacity-50');

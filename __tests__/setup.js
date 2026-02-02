@@ -18,6 +18,12 @@ jest.mock('../database/prisma', () => ({
       create: jest.fn(),
       delete: jest.fn(),
       count: jest.fn()
+    },
+    blockedTime: {
+      findMany: jest.fn(),
+      findFirst: jest.fn(),
+      create: jest.fn(),
+      delete: jest.fn()
     }
   },
   pool: {},
