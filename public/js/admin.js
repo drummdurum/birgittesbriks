@@ -1,5 +1,6 @@
 // Admin Panel JavaScript
 let currentUser = null;
+let selectedDates = []; // Array to store multiple selected dates
 
 // DOM Elements
 const loginSection = document.getElementById('loginSection');
@@ -55,6 +56,16 @@ function setupEventListeners() {
     
     // Block date form
     document.getElementById('blockDateForm').addEventListener('submit', handleBlockDate);
+    
+    // Multiple dates form
+    document.getElementById('blockMultipleDatesForm').addEventListener('submit', handleBlockMultipleDates);
+    document.getElementById('addDateBtn').addEventListener('click', addDateToList);
+    document.getElementById('multipleDatePicker').addEventListener('keypress', function(e) {
+        if (e.key === 'Enter') {
+            e.preventDefault();
+            addDateToList();
+        }
+    });
     
     // Manual booking form
     document.getElementById('manualBookingForm').addEventListener('submit', handleManualBooking);
@@ -543,6 +554,102 @@ async function removeBlockedDate(blockedId) {
     } catch (error) {
         console.error('Error removing blocked date:', error);
         showNotification('Fejl ved fjernelse af blokeret periode', 'error');
+    }
+}
+
+// Add date to selected dates list
+function addDateToList() {
+    const datePicker = document.getElementById('multipleDatePicker');
+    const selectedDate = datePicker.value;
+    
+    if (!selectedDate) {
+        showNotification('Vælg en dato først', 'error');
+        return;
+    }
+    
+    // Check if date is already selected
+    if (selectedDates.includes(selectedDate)) {
+        showNotification('Denne dato er allerede valgt', 'error');
+        return;
+    }
+    
+    // Add date to array
+    selectedDates.push(selectedDate);
+    
+    // Update UI
+    renderSelectedDates();
+    
+    // Clear input
+    datePicker.value = '';
+}
+
+// Render selected dates
+function renderSelectedDates() {
+    const container = document.getElementById('selectedDatesList');
+    
+    if (selectedDates.length === 0) {
+        container.innerHTML = '<span class="text-sm text-gray-400">Ingen datoer valgt</span>';
+        return;
+    }
+    
+    container.innerHTML = selectedDates.map(date => `
+        <span class="inline-flex items-center gap-2 bg-orange-100 text-orange-800 px-3 py-1 rounded-full text-sm">
+            ${formatDate(date)}
+            <button type="button" onclick="removeDateFromList('${date}')" class="hover:text-orange-600 font-bold">×</button>
+        </span>
+    `).join('');
+}
+
+// Remove date from selected list
+function removeDateFromList(date) {
+    selectedDates = selectedDates.filter(d => d !== date);
+    renderSelectedDates();
+}
+
+// Handle block multiple dates
+async function handleBlockMultipleDates(e) {
+    e.preventDefault();
+    
+    if (selectedDates.length === 0) {
+        showNotification('Vælg mindst én dato', 'error');
+        return;
+    }
+    
+    const formData = new FormData(e.target);
+    const reason = formData.get('reason') || null;
+    
+    try {
+        // Block each date individually
+        const promises = selectedDates.map(date => 
+            fetch('/api/admin/blocked-dates', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({
+                    startDate: date,
+                    endDate: null,
+                    reason: reason
+                })
+            })
+        );
+        
+        const results = await Promise.all(promises);
+        const allSuccessful = results.every(r => r.ok);
+        
+        if (allSuccessful) {
+            e.target.reset();
+            selectedDates = [];
+            renderSelectedDates();
+            loadBlockedDates();
+            showNotification(`${results.length} dato${results.length > 1 ? 'er' : ''} blokeret succesfuldt`, 'success');
+        } else {
+            showNotification('Nogle datoer kunne ikke blokeres', 'error');
+            loadBlockedDates();
+        }
+    } catch (error) {
+        console.error('Error blocking multiple dates:', error);
+        showNotification('Fejl ved blokering af datoer', 'error');
     }
 }
 

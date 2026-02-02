@@ -26,7 +26,7 @@ describe('✅ POSITIVE TESTS - Bookings API Success Cases', () => {
         navn: 'John Doe',
         email: 'john@example.com',
         telefon: '21853417',
-        ønsket_dato: '2025-02-15',
+        ønsket_dato: '2025-02-14',
         ønsket_tid: '14:00',
         behandling_type: 'Enkelt behandling',
         besked: 'Test booking',

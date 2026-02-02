@@ -310,15 +310,15 @@ describe('❌ NEGATIVE TESTS - Bookings API Error Cases', () => {
         navn: 'Test User',
         email: 'test@example.com',
         telefon: '12345678',
-        ønsket_dato: '2025-02-15',
+        ønsket_dato: '2025-02-14',
         ønsket_tid: '14:00',
         gdpr_samtykke: 'true'
       };
 
       prisma.blockedDate.findFirst.mockResolvedValueOnce({
         id: 1,
-        start_date: new Date('2025-02-15'),
-        end_date: new Date('2025-02-15')
+        start_date: new Date('2025-02-14'),
+        end_date: new Date('2025-02-14')
       });
 
       const response = await request(app)
@@ -334,7 +334,7 @@ describe('❌ NEGATIVE TESTS - Bookings API Error Cases', () => {
         navn: 'Test User',
         email: 'test@example.com',
         telefon: '12345678',
-        ønsket_dato: '2025-02-15',
+        ønsket_dato: '2025-02-14',
         ønsket_tid: '14:00',
         gdpr_samtykke: 'true'
       };
@@ -342,7 +342,7 @@ describe('❌ NEGATIVE TESTS - Bookings API Error Cases', () => {
       prisma.blockedDate.findFirst.mockResolvedValueOnce(null);
       prisma.booking.findFirst.mockResolvedValueOnce({
         id: 1,
-        ønsket_dato: new Date('2025-02-15'),
+        ønsket_dato: new Date('2025-02-14'),
         ønsket_tid: '14:00'
       });
 

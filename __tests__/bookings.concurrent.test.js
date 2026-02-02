@@ -19,7 +19,7 @@ describe('Concurrent booking handling', () => {
       navn: 'Concurrent User',
       email: 'concurrent@example.com',
       telefon: '12345678',
-      ønsket_dato: '2025-06-01',
+      ønsket_dato: '2025-06-03',
       ønsket_tid: '14:00',
       gdpr_samtykke: 'true'
     };

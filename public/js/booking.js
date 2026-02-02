@@ -80,9 +80,20 @@ document.addEventListener('DOMContentLoaded', function() {
                 break;
 
             case 'ønsket_dato':
-                if (field.value && new Date(field.value) < new Date(today)) {
-                    errorMsg = 'Datoen kan ikke være i fortiden';
-                    isValid = false;
+                if (field.value) {
+                    const selectedDate = new Date(field.value);
+                    const dayOfWeek = selectedDate.getDay(); // 0 = Sunday, 6 = Saturday
+                    
+                    // Check if weekend
+                    if (dayOfWeek === 0 || dayOfWeek === 6) {
+                        errorMsg = 'Booking i weekenden er ikke mulig. Vælg venligst en hverdag (mandag-fredag)';
+                        isValid = false;
+                    }
+                    // Check if date is in the past
+                    else if (selectedDate < new Date(today)) {
+                        errorMsg = 'Datoen kan ikke være i fortiden';
+                        isValid = false;
+                    }
                 }
                 break;
 
