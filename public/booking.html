@@ -54,11 +54,30 @@
     <!-- Header Navigation -->
     <header class="bg-sage-green fixed top-0 w-full z-50 shadow-md">
         <nav class="container-custom">
-            <ul class="flex justify-center gap-10 py-4">
+            <!-- Desktop Navigation -->
+            <ul class="hidden md:flex justify-center gap-10 py-4">
                 <li><a href="/" class="text-medium-gray hover:text-gray-800 font-medium text-base transition-colors duration-300">Hjem</a></li>
                 <li><a href="/#behandlinger" class="text-medium-gray hover:text-gray-800 font-medium text-base transition-colors duration-300">Behandlinger</a></li>
                 <li><a href="/#om" class="text-medium-gray hover:text-gray-800 font-medium text-base transition-colors duration-300">Om</a></li>
                 <li><a href="/#kontakt" class="text-medium-gray hover:text-gray-800 font-medium text-base transition-colors duration-300">Kontakt</a></li>
+            </ul>
+            
+            <!-- Mobile Navigation -->
+            <div class="md:hidden flex items-center justify-between py-4">
+                <span class="text-gray-800 font-medium text-lg">Birgittes Briks</span>
+                <button id="mobile-menu-btn" class="text-gray-800 focus:outline-none" aria-label="Menu">
+                    <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16"></path>
+                    </svg>
+                </button>
+            </div>
+            
+            <!-- Mobile Menu -->
+            <ul id="mobile-menu" class="hidden md:hidden flex-col gap-4 py-4 border-t border-medium-gray border-opacity-20">
+                <li><a href="/" class="block text-medium-gray hover:text-gray-800 font-medium text-base py-2 transition-colors duration-300">Hjem</a></li>
+                <li><a href="/#behandlinger" class="block text-medium-gray hover:text-gray-800 font-medium text-base py-2 transition-colors duration-300">Behandlinger</a></li>
+                <li><a href="/#om" class="block text-medium-gray hover:text-gray-800 font-medium text-base py-2 transition-colors duration-300">Om</a></li>
+                <li><a href="/#kontakt" class="block text-medium-gray hover:text-gray-800 font-medium text-base py-2 transition-colors duration-300">Kontakt</a></li>
             </ul>
         </nav>
     </header>
