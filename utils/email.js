@@ -144,6 +144,67 @@ const getAdminNotificationTemplate = (booking) => {
 
 const { sendEmailResend } = require('./resend');
 
+// Cancellation template (sent when booking is cancelled)
+const getCustomerCancellationTemplate = (booking) => {
+  const { navn, ønsket_dato, ønsket_tid, behandling_type, bookingId } = booking;
+
+  return {
+    subject: 'Din booking er annulleret - Birgittes Briks',
+    html: `
+    <!DOCTYPE html>
+    <html>
+    <head>
+        <style>
+            body { font-family: Arial, sans-serif; line-height: 1.6; color: #333; }
+            .container { max-width: 600px; margin: 0 auto; padding: 20px; }
+            .header { background: #dc2626; color: white; padding: 20px; text-align: center; }
+            .content { padding: 30px 20px; }
+            .booking-details { background: #fee2e2; padding: 20px; border-radius: 5px; margin: 20px 0; border-left: 4px solid #dc2626; }
+            .footer { background: #666; color: white; padding: 20px; text-align: center; }
+        </style>
+    </head>
+    <body>
+        <div class="container">
+            <div class="header">
+                <h1>Birgittes Briks</h1>
+                <p>Klinik for kropsterapi</p>
+            </div>
+
+            <div class="content">
+                <h2>Kære ${navn}</h2>
+
+                <p>Din booking er blevet annulleret.</p>
+
+                <div class="booking-details">
+                    <h3>Annulleret booking:</h3>
+                    <p><strong>Booking ID:</strong> #${bookingId}</p>
+                    <p><strong>Behandlingstype:</strong> ${behandling_type}</p>
+                    ${ønsket_dato ? `<p><strong>Dato:</strong> ${new Date(ønsket_dato).toLocaleDateString('da-DK')}</p>` : ''}
+                    ${ønsket_tid ? `<p><strong>Tidspunkt:</strong> ${ønsket_tid}</p>` : ''}
+                </div>
+
+                <p>Hvis du vil booke en ny tid, er du velkommen til at kontakte os:</p>
+                <ul>
+                    <li>📞 Telefon: +45 21 85 34 17</li>
+                    <li>✉️ Email: ${process.env.FROM_EMAIL}</li>
+                    <li>🌐 Website: Book direkte på hjemmesiden</li>
+                </ul>
+
+                <p>Hvis denne annullering er sket ved en fejl, så kontakt os venligst hurtigst muligt.</p>
+
+                <p>Med venlig hilsen<br><strong>Birgitte</strong><br>Birgittes Briks</p>
+            </div>
+
+            <div class="footer">
+                <p>Birgittes Briks | Barnekærvej 6, 3660 Stenløse | +45 21 85 34 17</p>
+            </div>
+        </div>
+    </body>
+    </html>
+    `
+  };
+};
+
 // Final confirmation template (sent when admin confirms booking)
 const getCustomerFinalConfirmationTemplate = (booking) => {
   const { navn, ønsket_dato, ønsket_tid, behandling_type, bookingId } = booking;
@@ -278,8 +339,32 @@ const sendBookingNotification = async (booking) => {
   return await transporter.sendMail(mailOptions);
 };
 
+// Send cancellation email to customer
+const sendBookingCancellation = async (booking) => {
+  const template = getCustomerCancellationTemplate(booking);
+
+  if (process.env.RESEND_API_KEY && booking.email) {
+    return await sendEmailResend({
+      from: process.env.RESEND_FROM || process.env.FROM_EMAIL,
+      to: booking.email,
+      subject: template.subject,
+      html: template.html
+    });
+  }
+
+  const mailOptions = {
+    from: process.env.FROM_EMAIL,
+    to: booking.email,
+    subject: template.subject,
+    html: template.html
+  };
+
+  return await transporter.sendMail(mailOptions);
+};
+
 module.exports = {
   sendBookingConfirmation,
   sendBookingNotification,
-  sendBookingFinalConfirmation
+  sendBookingFinalConfirmation,
+  sendBookingCancellation
 };

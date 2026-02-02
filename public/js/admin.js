@@ -212,6 +212,8 @@ function switchTab(tabName) {
         loadBlockedDates();
     } else if (tabName === 'completed') {
         loadCompletedBookings();
+    } else if (tabName === 'cancelled') {
+        loadCancelledBookings();
     }
 }
 
@@ -233,8 +235,8 @@ async function loadBookings() {
         const bookingDaysEl = document.getElementById('bookingDays');
         const bookingsOfDayEl = document.getElementById('bookingsOfDay');
 
-        // Only consider ufærdige bookings for the days list and per-day view
-        const incompleteBookings = bookings.filter(b => !b.completed);
+        // Only consider ufærdige AND not cancelled bookings for the days list and per-day view
+        const incompleteBookings = bookings.filter(b => !b.completed && b.status !== 'cancelled');
 
         if (incompleteBookings.length === 0) {
             bookingDaysEl.innerHTML = `<div class="text-center py-8"><div class="text-4xl mb-3">📝</div><p class="text-gray-500">Ingen ufærdige bookinger</p></div>`;
@@ -322,6 +324,43 @@ async function loadCompletedBookings() {
     }
 }
 
+// Load and render cancelled bookings into the Cancelled tab
+async function loadCancelledBookings() {
+    try {
+        const response = await fetch('/api/admin/bookings');
+        if (!response.ok) throw new Error(`HTTP error! status: ${response.status}`);
+        const bookings = await response.json();
+        const cancelled = bookings.filter(b => b.status === 'cancelled');
+        const container = document.getElementById('cancelledList');
+
+        if (!Array.isArray(cancelled) || cancelled.length === 0) {
+            container.innerHTML = `<div class="text-center py-8"><div class="text-4xl mb-3">❌</div><p class="text-gray-500">Ingen annullerede bookinger</p></div>`;
+            return;
+        }
+
+        container.innerHTML = cancelled.map(booking => `
+            <div class="admin-card p-4 border-l-4 border-red-500">
+                <div class="flex justify-between items-start mb-2">
+                    <div>
+                        <h4 class="font-medium text-lg">${booking.navn}</h4>
+                        <p class="text-sm text-gray-500">Booking #${booking.id} · ${formatDate(booking.ønsket_dato)} · kl. ${booking.ønsket_tid}</p>
+                    </div>
+                    <div class="text-sm status-badge status-cancelled">Annulleret</div>
+                </div>
+                <div class="text-sm text-gray-700 mb-3">
+                    <div>📞 ${booking.telefon}</div>
+                    ${booking.email ? `<div>✉️ ${booking.email}</div>` : ''}
+                    <div>💆‍♀️ ${booking.behandling_type}</div>
+                    ${booking.besked ? `<div class="mt-2">💬 ${booking.besked}</div>` : ''}
+                </div>
+            </div>
+        `).join('');
+    } catch (error) {
+        console.error('Error loading cancelled bookings:', error);
+        document.getElementById('cancelledList').innerHTML = '<p class="text-red-500 text-center py-4">Fejl ved indlæsning af annullerede bookinger.</p>';
+    }
+}
+
 // Render bookings for a specific date into the provided container
 function renderBookingsForDate(bookingsForDate, containerEl) {
     containerEl.innerHTML = bookingsForDate.map(booking => `
@@ -364,6 +403,7 @@ async function updateBookingStatus(bookingId, status) {
         if (result.success) {
             loadBookings(); // Reload the bookings list (shows only ufærdige)
             loadCompletedBookings(); // Reload færdige tab
+            loadCancelledBookings(); // Reload annullerede tab
             const msg = status === 'confirmed' ? 'bekræftet' : status === 'cancelled' ? 'annulleret' : status === 'completed' ? 'markeret som færdig' : 'opdateret';
             showNotification(`Booking ${msg}`, 'success');
 

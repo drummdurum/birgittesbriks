@@ -1,7 +1,7 @@
 const express = require('express');
 const bcrypt = require('bcrypt');
 const { prisma } = require('../database/prisma');
-const { sendBookingFinalConfirmation } = require('../utils/email');
+const { sendBookingFinalConfirmation, sendBookingCancellation } = require('../utils/email');
 const router = express.Router();
 
 // Middleware to check if user is authenticated as admin
@@ -234,6 +234,26 @@ router.put('/bookings/:id/status', requireAdmin, async (req, res) => {
                     });
                 } catch (emailErr) {
                     console.error('Error sending final confirmation email:', emailErr);
+                }
+            })();
+        }
+
+        // If booking was just cancelled, send cancellation email to customer (do not fail on email errors)
+        if (status === 'cancelled' && serializedBooking.email) {
+            (async () => {
+                try {
+                    await sendBookingCancellation({
+                        navn: serializedBooking.navn,
+                        email: serializedBooking.email,
+                        telefon: serializedBooking.telefon,
+                        ønsket_dato: serializedBooking.ønsket_dato,
+                        ønsket_tid: serializedBooking.ønsket_tid,
+                        behandling_type: serializedBooking.behandling_type,
+                        besked: serializedBooking.besked,
+                        bookingId: serializedBooking.id
+                    });
+                } catch (emailErr) {
+                    console.error('Error sending cancellation email:', emailErr);
                 }
             })();
         }
