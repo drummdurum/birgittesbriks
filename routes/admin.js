@@ -105,13 +105,14 @@ router.post('/bookings', requireAdmin, async (req, res) => {
             email,
             ønsket_dato,
             ønsket_tid,
-            behandling_type,
+            behandling = 'Kropsterapi',
+            betaling = 'Enkelt behandling (650 kr.)',
             besked,
             status = 'confirmed'
         } = req.body;
         
         // Validate required fields
-        if (!navn || !telefon || !ønsket_dato || !ønsket_tid || !behandling_type) {
+        if (!navn || !telefon || !ønsket_dato || !ønsket_tid) {
             return res.status(400).json({
                 success: false,
                 message: 'Alle påkrævede felter skal udfyldes'
@@ -174,7 +175,8 @@ router.post('/bookings', requireAdmin, async (req, res) => {
                 email: email || null,
                 ønsket_dato: new Date(ønsket_dato),
                 ønsket_tid,
-                behandling_type,
+                behandling,
+                betaling,
                 besked: besked || null,
                 status,
                 created_by_admin: true

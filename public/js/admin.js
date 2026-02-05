@@ -365,7 +365,7 @@ async function loadCompletedBookings() {
                 <div class="text-sm text-gray-700 mb-3">
                     <div>📞 ${booking.telefon}</div>
                     ${booking.email ? `<div>✉️ ${booking.email}</div>` : ''}
-                    <div>💆‍♀️ ${booking.behandling_type}</div>
+                    <div>💆‍♀️ ${booking.behandling || 'Kropsterapi'} - ${booking.betaling}</div>
                     ${booking.besked ? `<div class="mt-2">💬 ${booking.besked}</div>` : ''}
                 </div>
             </div>
@@ -860,7 +860,8 @@ async function handleManualBooking(e) {
         email: formData.get('email') || null,
         ønsket_dato: formData.get('ønsket_dato'),
         ønsket_tid: formData.get('ønsket_tid'),
-        betaling: formData.get('betaling'),
+        behandling: formData.get('manualBehandling') || 'Kropsterapi',
+        betaling: formData.get('manualBetaling'),
         besked: formData.get('besked') || null,
         status: 'confirmed', // Manual bookings are automatically confirmed
         created_by_admin: true

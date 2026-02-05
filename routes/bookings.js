@@ -49,6 +49,11 @@ const bookingValidation = [
     .isLength({ max: 20 })
     .withMessage('Tidspunkt må maks være 20 tegn'),
     
+  body('behandling')
+    .optional()
+    .isIn(['Kropsterapi'])
+    .withMessage('Vælg en gyldig behandling'),
+    
   body('betaling')
     .optional()
     .isIn(['Enkelt behandling (650 kr.)', '3 behandlinger - klippekort (1800 kr.)', '10 behandlinger - klippekort (5500 kr.)'])
@@ -77,7 +82,8 @@ router.get('/', async (req, res) => {
         telefon: true,
         ønsket_dato: true,
         ønsket_tid: true,
-        behandling_type: true,
+        behandling: true,
+        betaling: true,
         besked: true,
         status: true,
         completed: true,
@@ -123,6 +129,7 @@ router.post('/', bookingLimiter, bookingValidation, async (req, res) => {
       telefon,
       ønsket_dato,
       ønsket_tid,
+      behandling = 'Kropsterapi',
       betaling = 'Enkelt behandling (650 kr.)',
       besked,
       gdpr_samtykke
