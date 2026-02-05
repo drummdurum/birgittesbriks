@@ -81,6 +81,19 @@ function setupEventListeners() {
     // Manual booking form
     safeAddListener(document.getElementById('manualBookingForm'), 'submit', handleManualBooking);
     
+    // User search
+    safeAddListener(document.getElementById('userSearch'), 'input', handleUserSearch);
+    safeAddListener(document.getElementById('userSearch'), 'focus', function() {
+        if (this.value.length >= 2) {
+            document.getElementById('userSearchResults').classList.remove('hidden');
+        }
+    });
+    document.addEventListener('click', function(e) {
+        if (!e.target.matches('#userSearch') && !e.target.closest('#userSearchResults')) {
+            document.getElementById('userSearchResults').classList.add('hidden');
+        }
+    });
+    
     // Update end date minimum when start date changes
     safeAddListener(document.getElementById('blockStartDate'), 'change', function() {
         const blockEndDate = document.getElementById('blockEndDate');
@@ -728,6 +741,52 @@ async function handleBlockMultipleDates(e) {
         console.error('Error blocking multiple dates:', error);
         showNotification('Fejl ved blokering af datoer', 'error');
     }
+}
+
+// Handle user search
+async function handleUserSearch(e) {
+    const query = e.target.value.trim();
+    const resultsContainer = document.getElementById('userSearchResults');
+    
+    if (query.length < 2) {
+        resultsContainer.classList.add('hidden');
+        return;
+    }
+    
+    try {
+        const response = await fetch(`/api/bookings/search?q=${encodeURIComponent(query)}`);
+        const data = await response.json();
+        
+        if (data.success && data.users && data.users.length > 0) {
+            resultsContainer.innerHTML = data.users.map(user => `
+                <li class="px-4 py-3 hover:bg-gray-100 cursor-pointer border-b border-gray-200 last:border-b-0 transition-colors"
+                    onclick="selectUser(${user.id}, '${user.navn} ${user.efternavn}', '${user.telefon}', '${user.email || ''}')">
+                    <div class="font-medium text-gray-900">${user.navn} ${user.efternavn}</div>
+                    <div class="text-sm text-gray-600">${user.telefon}${user.email ? ' • ' + user.email : ''}</div>
+                </li>
+            `).join('');
+            resultsContainer.classList.remove('hidden');
+        } else {
+            resultsContainer.innerHTML = '<li class="px-4 py-3 text-gray-500 text-center">Ingen brugere fundet</li>';
+            resultsContainer.classList.remove('hidden');
+        }
+    } catch (error) {
+        console.error('Search error:', error);
+        resultsContainer.innerHTML = '<li class="px-4 py-3 text-red-500 text-center">Fejl ved søgning</li>';
+        resultsContainer.classList.remove('hidden');
+    }
+}
+
+// Select user and fill form
+function selectUser(userId, fullName, telefon, email) {
+    document.getElementById('manualNavn').value = fullName;
+    document.getElementById('manualTelefon').value = telefon;
+    if (document.getElementById('manualEmail')) {
+        document.getElementById('manualEmail').value = email;
+    }
+    document.getElementById('userSearch').value = '';
+    document.getElementById('userSearchResults').classList.add('hidden');
+    document.getElementById('manualNavn').focus();
 }
 
 // Handle manual booking

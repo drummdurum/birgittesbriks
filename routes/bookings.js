@@ -191,6 +191,36 @@ router.post('/', bookingLimiter, bookingValidation, async (req, res) => {
       }
     }
 
+    // Create or get user
+    let user;
+    try {
+      const navnParts = navn.split(' ');
+      const firstName = navnParts[0];
+      const lastName = navnParts.slice(1).join(' ');
+      
+      user = await prisma.user.upsert({
+        where: { 
+          email_telefon: {
+            email: email || null,
+            telefon: telefon
+          }
+        },
+        update: {
+          navn: firstName,
+          efternavn: lastName
+        },
+        create: {
+          navn: firstName,
+          efternavn: lastName,
+          email: email || null,
+          telefon
+        }
+      });
+    } catch (userErr) {
+      console.error('User creation/update error:', userErr);
+      // Continue without user ID if user creation fails
+    }
+
     // Insert booking into database
     let booking;
     try {
@@ -203,7 +233,8 @@ router.post('/', bookingLimiter, bookingValidation, async (req, res) => {
           ønsket_tid,
           behandling_type,
           besked,
-          gdpr_samtykke: gdpr_samtykke === 'true' || gdpr_samtykke === true
+          gdpr_samtykke: gdpr_samtykke === 'true' || gdpr_samtykke === true,
+          userId: user?.id || null
         }
       });
     } catch (createErr) {
@@ -305,6 +336,45 @@ router.put('/:id/status', async (req, res) => {
     console.error('Status update error:', err);
     res.status(500).json({
       error: 'Der opstod en fejl ved opdatering af booking'
+    });
+  }
+});
+
+// GET /api/bookings/search - Search users by phone or name
+router.get('/search', async (req, res) => {
+  try {
+    const { q } = req.query;
+    
+    if (!q || q.length < 2) {
+      return res.json({ users: [] });
+    }
+
+    const users = await prisma.user.findMany({
+      where: {
+        OR: [
+          { telefon: { contains: q } },
+          { navn: { contains: q, mode: 'insensitive' } },
+          { efternavn: { contains: q, mode: 'insensitive' } }
+        ]
+      },
+      select: {
+        id: true,
+        navn: true,
+        efternavn: true,
+        email: true,
+        telefon: true
+      },
+      take: 10
+    });
+
+    res.json({
+      success: true,
+      users
+    });
+  } catch (err) {
+    console.error('Search error:', err);
+    res.status(500).json({
+      error: 'Der opstod en fejl ved søgning'
     });
   }
 });

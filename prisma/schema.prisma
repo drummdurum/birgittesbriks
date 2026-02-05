@@ -10,6 +10,22 @@ datasource db {
   url      = env("DATABASE_URL")
 }
 
+model User {
+  id            Int       @id @default(autoincrement())
+  navn          String    @db.VarChar(100)
+  efternavn     String    @db.VarChar(100)
+  email         String?   @db.VarChar(255)
+  telefon       String    @db.VarChar(20)
+  created_at    DateTime  @default(now())
+  updated_at    DateTime  @updatedAt
+  bookings      Booking[]
+
+  @@map("users")
+  @@index([telefon])
+  @@index([navn])
+  @@unique([email, telefon])
+}
+
 model Booking {
   id                Int       @id @default(autoincrement())
   navn              String    @db.VarChar(100)
@@ -25,12 +41,15 @@ model Booking {
   created_by_admin  Boolean   @default(false)
   created_at        DateTime  @default(now())
   updated_at        DateTime  @updatedAt
+  userId            Int?
+  user              User?     @relation(fields: [userId], references: [id], onDelete: SetNull)
 
   @@map("bookings")
   @@index([status])
   @@index([created_at])
   @@index([email])
   @@index([ønsket_dato, ønsket_tid])
+  @@index([userId])
 }
 
 model BlockedDate {
