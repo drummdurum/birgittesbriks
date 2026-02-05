@@ -614,4 +614,65 @@ router.delete('/blocked-times/:id', requireAdmin, async (req, res) => {
     }
 });
 
+// POST /api/admin/import-users - Import users from list
+router.post('/import-users', requireAdmin, async (req, res) => {
+    try {
+        const { users } = req.body;
+
+        if (!Array.isArray(users) || users.length === 0) {
+            return res.status(400).json({
+                success: false,
+                message: 'Ugyldig brugerliste'
+            });
+        }
+
+        let created = 0;
+        let skipped = 0;
+        const errors = [];
+
+        for (const user of users) {
+            try {
+                if (!user.navn || !user.telefon) {
+                    errors.push(`Manglende navn eller telefon for bruger`);
+                    continue;
+                }
+
+                const existingUser = await prisma.user.findFirst({
+                    where: { telefon: user.telefon }
+                });
+
+                if (existingUser) {
+                    skipped++;
+                } else {
+                    await prisma.user.create({
+                        data: {
+                            navn: user.navn,
+                            efternavn: user.efternavn || '',
+                            email: user.email || 'test@test.dk',
+                            telefon: user.telefon
+                        }
+                    });
+                    created++;
+                }
+            } catch (err) {
+                errors.push(`${user.navn}: ${err.message}`);
+            }
+        }
+
+        res.json({
+            success: true,
+            message: `Import gennemført: ${created} oprettet, ${skipped} eksisterede allerede`,
+            created,
+            skipped,
+            errors: errors.length > 0 ? errors : undefined
+        });
+    } catch (error) {
+        console.error('Import users error:', error);
+        res.status(500).json({
+            success: false,
+            message: 'Fejl ved import af brugere'
+        });
+    }
+});
+
 module.exports = router;

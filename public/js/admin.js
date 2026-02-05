@@ -81,6 +81,9 @@ function setupEventListeners() {
     // Manual booking form
     safeAddListener(document.getElementById('manualBookingForm'), 'submit', handleManualBooking);
     
+    // Import users form
+    safeAddListener(document.getElementById('importUsersForm'), 'submit', handleImportUsers);
+    
     // User search
     safeAddListener(document.getElementById('userSearch'), 'input', handleUserSearch);
     safeAddListener(document.getElementById('userSearch'), 'focus', function() {
@@ -787,6 +790,63 @@ function selectUser(userId, fullName, telefon, email) {
     document.getElementById('userSearch').value = '';
     document.getElementById('userSearchResults').classList.add('hidden');
     document.getElementById('manualNavn').focus();
+}
+
+// Handle import of users
+async function handleImportUsers(e) {
+    e.preventDefault();
+    
+    const textarea = document.getElementById('usersJson');
+    const statusDiv = document.getElementById('importStatus');
+    
+    try {
+        const users = JSON.parse(textarea.value);
+        
+        if (!Array.isArray(users) || users.length === 0) {
+            statusDiv.className = 'mt-6 p-4 bg-red-100 border border-red-400 text-red-700 rounded-lg';
+            statusDiv.innerHTML = '❌ Ugyldig format. Skal være et JSON array med brugere.';
+            statusDiv.classList.remove('hidden');
+            return;
+        }
+
+        statusDiv.className = 'mt-6 p-4 bg-blue-100 border border-blue-400 text-blue-700 rounded-lg';
+        statusDiv.innerHTML = '⏳ Importerer brugere...';
+        statusDiv.classList.remove('hidden');
+        
+        const response = await fetch('/api/admin/import-users', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({ users })
+        });
+        
+        const result = await response.json();
+        
+        if (result.success) {
+            statusDiv.className = 'mt-6 p-4 bg-green-100 border border-green-400 text-green-700 rounded-lg';
+            let html = `✅ ${result.message}<br>`;
+            html += `• Oprettet: ${result.created}<br>`;
+            html += `• Eksisterede allerede: ${result.skipped}`;
+            
+            if (result.errors && result.errors.length > 0) {
+                html += `<br><br>⚠️ Fejl:<br>`;
+                result.errors.forEach(err => {
+                    html += `• ${err}<br>`;
+                });
+            }
+            
+            statusDiv.innerHTML = html;
+            textarea.value = '';
+        } else {
+            statusDiv.className = 'mt-6 p-4 bg-red-100 border border-red-400 text-red-700 rounded-lg';
+            statusDiv.innerHTML = `❌ ${result.message}`;
+        }
+    } catch (error) {
+        statusDiv.className = 'mt-6 p-4 bg-red-100 border border-red-400 text-red-700 rounded-lg';
+        statusDiv.innerHTML = `❌ Fejl: ${error.message}`;
+        statusDiv.classList.remove('hidden');
+    }
 }
 
 // Handle manual booking

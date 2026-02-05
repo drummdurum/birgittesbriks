@@ -97,6 +97,11 @@
                                 ➕ <span class="hidden sm:inline">Manuel booking</span>
                             </span>
                         </button>
+                        <button class="tab-btn flex-1 py-3 px-4 rounded-lg text-gray-600 hover:text-gray-800 hover:bg-gray-100 font-medium transition-colors" data-tab="import-users">
+                            <span class="flex items-center justify-center gap-2">
+                                👥 <span class="hidden sm:inline">Importer brugere</span>
+                            </span>
+                        </button>
                         <button class="tab-btn flex-1 py-3 px-4 rounded-lg text-gray-600 hover:text-gray-800 hover:bg-gray-100 font-medium transition-colors" data-tab="cancelled">
                             <span class="flex items-center justify-center gap-2">
                                 ❌ <span class="hidden sm:inline">Annulleret</span>
@@ -492,6 +497,40 @@
                                 </span>
                             </button>
                         </form>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Import Users Tab -->
+            <div id="import-usersTab" class="tab-content hidden">
+                <div class="max-w-3xl mx-auto admin-card" style="padding: 0; overflow: hidden;">
+                    <div class="bg-gradient-to-r from-blue-600 to-blue-700 p-6 text-white">
+                        <div class="flex items-center justify-between">
+                            <div>
+                                <h2 class="text-2xl font-medium">Importer brugere</h2>
+                                <p class="opacity-90 mt-1">Tilføj flere brugere fra en liste</p>
+                            </div>
+                            <div class="text-3xl">👥</div>
+                        </div>
+                    </div>
+                    <div class="p-6">
+                        <form id="importUsersForm" class="space-y-6">
+                            <div>
+                                <label for="usersJson" class="block text-sm font-medium text-gray-700 mb-2">Brugerliste (JSON format)</label>
+                                <textarea id="usersJson" 
+                                          name="usersJson" 
+                                          required 
+                                          rows="10"
+                                          class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-colors font-mono text-sm"
+                                          placeholder="Indsæt JSON array med brugere. Eksempel:&#10;[&#10;  {&#10;    &quot;navn&quot;: &quot;John&quot;,&#10;    &quot;efternavn&quot;: &quot;Doe&quot;,&#10;    &quot;telefon&quot;: &quot;12345678&quot;,&#10;    &quot;email&quot;: &quot;test@test.dk&quot;&#10;  }&#10;]"></textarea>
+                            </div>
+                            <button type="submit" class="w-full bg-blue-600 hover:bg-blue-700 text-white font-medium py-3 px-4 rounded-lg transition-colors shadow-md">
+                                <span class="flex items-center justify-center gap-2">
+                                    👥 Importer brugere
+                                </span>
+                            </button>
+                        </form>
+                        <div id="importStatus" class="mt-6 hidden"></div>
                     </div>
                 </div>
             </div>
