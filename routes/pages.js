@@ -18,6 +18,11 @@ router.get('/booking-confirmation', (req, res) => {
     res.sendFile(path.join(__dirname, '..', 'public', 'booking.html'));
 });
 
+// Privacy policy page
+router.get('/privatliv', (req, res) => {
+    res.sendFile(path.join(__dirname, '..', 'public', 'privatliv.html'));
+});
+
 // Admin page
 router.get('/admin', (req, res) => {
     res.sendFile(path.join(__dirname, '..', 'public', 'admin.html'));
