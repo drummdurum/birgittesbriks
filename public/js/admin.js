@@ -402,7 +402,7 @@ async function loadCancelledBookings() {
                 <div class="text-sm text-gray-700 mb-3">
                     <div>📞 ${booking.telefon}</div>
                     ${booking.email ? `<div>✉️ ${booking.email}</div>` : ''}
-                    <div>💆‍♀️ ${booking.behandling_type}</div>
+                    <div>💆‍♀️ ${booking.behandling || 'Kropsterapi'} - ${booking.betaling}</div>
                     ${booking.besked ? `<div class="mt-2">💬 ${booking.besked}</div>` : ''}
                 </div>
             </div>
@@ -427,7 +427,7 @@ function renderBookingsForDate(bookingsForDate, containerEl) {
             <div class="text-sm text-gray-700 mb-3">
                 <div>📞 ${booking.telefon}</div>
                 ${booking.email ? `<div>✉️ ${booking.email}</div>` : ''}
-                <div>💆‍♀️ ${booking.behandling_type}</div>
+                <div>💆‍♀️ ${booking.behandling || 'Kropsterapi'} - ${booking.betaling}</div>
                 ${booking.besked ? `<div class="mt-2">💬 ${booking.besked}</div>` : ''}
             </div>
             <div class="flex gap-3 pt-2 border-t border-gray-100">
@@ -860,7 +860,7 @@ async function handleManualBooking(e) {
         email: formData.get('email') || null,
         ønsket_dato: formData.get('ønsket_dato'),
         ønsket_tid: formData.get('ønsket_tid'),
-        behandling_type: formData.get('behandling_type'),
+        betaling: formData.get('betaling'),
         besked: formData.get('besked') || null,
         status: 'confirmed', // Manual bookings are automatically confirmed
         created_by_admin: true

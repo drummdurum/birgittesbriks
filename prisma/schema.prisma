@@ -33,7 +33,8 @@ model Booking {
   telefon           String    @db.VarChar(20)
   ønsket_dato       DateTime? @db.Date
   ønsket_tid        String?   @db.VarChar(20)
-  behandling_type   String    @default("Enkelt behandling") @db.VarChar(50)
+  behandling        String    @default("Kropsterapi") @db.VarChar(50)
+  betaling          String    @default("Enkelt behandling") @db.VarChar(100)
   besked            String?
   status            String    @default("pending") @db.VarChar(20)
   completed         Boolean   @default(false)

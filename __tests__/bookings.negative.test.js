@@ -234,12 +234,12 @@ describe('❌ NEGATIVE TESTS - Bookings API Error Cases', () => {
       expect(response.status).toBe(400);
     });
 
-    test('❌ Should reject invalid behandling_type', async () => {
+    test('❌ Should reject invalid betaling', async () => {
       const booking = {
         navn: 'Test User',
         email: 'test@example.com',
         telefon: '12345678',
-        behandling_type: 'Invalid Treatment',
+        betaling: 'Invalid Treatment',
         gdpr_samtykke: 'true'
       };
 
@@ -248,7 +248,7 @@ describe('❌ NEGATIVE TESTS - Bookings API Error Cases', () => {
         .send(booking);
 
       expect(response.status).toBe(400);
-      expect(response.body.details[0].msg).toContain('gyldig behandlingstype');
+      expect(response.body.details[0].msg).toContain('gyldig betalingsmulighed');
     });
 
     test('❌ Should reject invalid ønsket_dato format', async () => {

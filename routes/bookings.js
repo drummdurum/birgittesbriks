@@ -49,10 +49,10 @@ const bookingValidation = [
     .isLength({ max: 20 })
     .withMessage('Tidspunkt må maks være 20 tegn'),
     
-  body('behandling_type')
+  body('betaling')
     .optional()
-    .isIn(['Enkelt behandling', '3 behandlinger (klippekort)', '10 behandlinger (klippekort)'])
-    .withMessage('Vælg en gyldig behandlingstype'),
+    .isIn(['Enkelt behandling (650 kr.)', '3 behandlinger - klippekort (1800 kr.)', '10 behandlinger - klippekort (5500 kr.)'])
+    .withMessage('Vælg en gyldig betalingsmulighed'),
     
   body('besked')
     .optional()
@@ -123,7 +123,7 @@ router.post('/', bookingLimiter, bookingValidation, async (req, res) => {
       telefon,
       ønsket_dato,
       ønsket_tid,
-      behandling_type = 'Enkelt behandling',
+      betaling = 'Enkelt behandling (650 kr.)',
       besked,
       gdpr_samtykke
     } = req.body;
@@ -231,7 +231,8 @@ router.post('/', bookingLimiter, bookingValidation, async (req, res) => {
           telefon,
           ønsket_dato: ønsket_dato ? new Date(ønsket_dato) : null,
           ønsket_tid,
-          behandling_type,
+          behandling: 'Kropsterapi',
+          betaling,
           besked,
           gdpr_samtykke: gdpr_samtykke === 'true' || gdpr_samtykke === true,
           userId: user?.id || null
@@ -258,7 +259,8 @@ router.post('/', bookingLimiter, bookingValidation, async (req, res) => {
           telefon,
           ønsket_dato,
           ønsket_tid,
-          behandling_type,
+          behandling: 'Kropsterapi',
+          betaling,
           besked,
           bookingId: booking.id
         }),
@@ -268,7 +270,8 @@ router.post('/', bookingLimiter, bookingValidation, async (req, res) => {
           telefon,
           ønsket_dato,
           ønsket_tid,
-          behandling_type,
+          behandling: 'Kropsterapi',
+          betaling,
           besked,
           bookingId: booking.id,
           created_at: booking.created_at
