@@ -1,3 +1,3 @@
 User-agent: *
 Allow: /
-Sitemap: https://birgittesbriks.dk/sitemap.xml
+Sitemap: https://www.birgittesbriks.dk/sitemap.xml
