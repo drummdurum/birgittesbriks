@@ -15,6 +15,7 @@ async function checkAuthStatus() {
             loadBlockedDates();
             loadBlockedTimes();
             loadCompletedBookings();
+            loadAllUsers();
         } else {
             showLogin();
         }
@@ -52,6 +53,7 @@ async function handleLogin(e) {
             loadBookings();
             loadBlockedDates();
             loadCompletedBookings();
+            loadAllUsers();
             loginForm.reset();
             hideError();
         } else {

@@ -93,6 +93,8 @@ function switchTab(tabName) {
         loadCompletedBookings();
     } else if (tabName === 'cancelled') {
         loadCancelledBookings();
+    } else if (tabName === 'manual-booking') {
+        loadAllUsers();
     }
 }
 

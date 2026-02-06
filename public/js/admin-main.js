@@ -88,6 +88,21 @@ function setupEventListeners() {
     // Import users form
     safeAddListener(importUsersForm, 'submit', handleImportUsers);
     
+    // Edit user form
+    const editUserForm = document.getElementById('editUserForm');
+    safeAddListener(editUserForm, 'submit', handleEditUser);
+    
+    // Users search
+    const usersSearchInput = document.getElementById('usersSearchInput');
+    safeAddListener(usersSearchInput, 'input', handleUsersSearch);
+    
+    // Close modal when clicking outside
+    document.getElementById('editUserModal').addEventListener('click', function(e) {
+        if (e.target === this) {
+            closeEditUserModal();
+        }
+    });
+    
     // User search
     safeAddListener(userSearch, 'input', handleUserSearch);
     safeAddListener(userSearch, 'focus', function() {

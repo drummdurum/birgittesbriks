@@ -677,4 +677,69 @@ router.post('/import-users', requireAdmin, async (req, res) => {
     }
 });
 
+// Get all users
+router.get('/users', requireAdmin, async (req, res) => {
+    try {
+        const users = await prisma.user.findMany({
+            orderBy: [{ navn: 'asc' }, { efternavn: 'asc' }]
+        });
+        
+        res.json({
+            success: true,
+            users: users
+        });
+    } catch (error) {
+        console.error('Get users error:', error);
+        res.status(500).json({
+            success: false,
+            message: 'Fejl ved hentning af brugere'
+        });
+    }
+});
+
+// Update user
+router.put('/users/:id', requireAdmin, async (req, res) => {
+    try {
+        const userId = parseInt(req.params.id);
+        const { navn, efternavn, email, telefon } = req.body;
+        
+        if (!navn || !efternavn || !telefon) {
+            return res.status(400).json({
+                success: false,
+                message: 'Navn, efternavn og telefon er påkrævet'
+            });
+        }
+        
+        const user = await prisma.user.update({
+            where: { id: userId },
+            data: {
+                navn: navn.trim(),
+                efternavn: efternavn.trim(),
+                email: email && email.trim() ? email.trim() : null,
+                telefon: telefon.trim()
+            }
+        });
+        
+        res.json({
+            success: true,
+            message: 'Bruger opdateret succesfuldt',
+            user: user
+        });
+    } catch (error) {
+        console.error('Update user error:', error);
+        
+        if (error.code === 'P2002') {
+            return res.status(400).json({
+                success: false,
+                message: 'Email og telefon kombinationen findes allerede'
+            });
+        }
+        
+        res.status(500).json({
+            success: false,
+            message: 'Fejl ved opdatering af bruger'
+        });
+    }
+});
+
 module.exports = router;

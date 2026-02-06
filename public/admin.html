@@ -517,7 +517,93 @@
                         </form>
                     </div>
                 </div>
+
+                <!-- Users List Section -->
+                <div class="mt-8 admin-card" style="padding: 0; overflow: hidden;">
+                    <div class="bg-gradient-to-r from-purple-600 to-purple-700 p-6 text-white">
+                        <div class="flex items-center justify-between">
+                            <div>
+                                <h2 class="text-2xl font-medium">Alle brugere</h2>
+                                <p class="opacity-90 mt-1">Søg og rediger brugeroplysninger</p>
+                            </div>
+                            <div class="text-3xl">👥</div>
+                        </div>
+                    </div>
+                    <div class="p-6">
+                        <!-- Search Users -->
+                        <div class="mb-6">
+                            <input type="text" 
+                                   id="usersSearchInput" 
+                                   placeholder="Søg efter navn, email eller telefon..." 
+                                   class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-transparent transition-colors">
+                        </div>
+
+                        <!-- Users List -->
+                        <div id="usersList" class="space-y-3 max-h-96 overflow-y-auto">
+                            <div class="flex items-center justify-center py-8">
+                                <div class="animate-spin rounded-full h-6 w-6 border-b-2 border-purple-600"></div>
+                                <span class="ml-3 text-gray-600">Indlæser brugere...</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
             </div>
+
+            <!-- Edit User Modal -->
+            <div id="editUserModal" class="fixed inset-0 bg-black bg-opacity-50 hidden flex items-center justify-center z-50 p-4">
+                <div class="bg-white rounded-lg shadow-xl max-w-md w-full">
+                    <div class="bg-gradient-to-r from-purple-600 to-purple-700 p-6 text-white">
+                        <h2 class="text-xl font-medium">Rediger bruger</h2>
+                    </div>
+                    <div class="p-6">
+                        <form id="editUserForm" class="space-y-6">
+                            <input type="hidden" id="editUserId" name="id">
+                            
+                            <div>
+                                <label for="editUserNavn" class="block text-sm font-medium text-gray-700 mb-2">Fornavn *</label>
+                                <input type="text" 
+                                       id="editUserNavn" 
+                                       name="navn" 
+                                       required 
+                                       class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-transparent transition-colors">
+                            </div>
+
+                            <div>
+                                <label for="editUserEfternavn" class="block text-sm font-medium text-gray-700 mb-2">Efternavn *</label>
+                                <input type="text" 
+                                       id="editUserEfternavn" 
+                                       name="efternavn" 
+                                       required 
+                                       class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-transparent transition-colors">
+                            </div>
+
+                            <div>
+                                <label for="editUserEmail" class="block text-sm font-medium text-gray-700 mb-2">Email</label>
+                                <input type="email" 
+                                       id="editUserEmail" 
+                                       name="email" 
+                                       class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-transparent transition-colors">
+                            </div>
+
+                            <div>
+                                <label for="editUserTelefon" class="block text-sm font-medium text-gray-700 mb-2">Telefon *</label>
+                                <input type="tel" 
+                                       id="editUserTelefon" 
+                                       name="telefon" 
+                                       required 
+                                       class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-transparent transition-colors">
+                            </div>
+
+                            <div class="flex gap-3 pt-4 border-t border-gray-200">
+                                <button type="button" onclick="closeEditUserModal()" class="flex-1 px-4 py-2 border border-gray-300 rounded-lg text-gray-700 hover:bg-gray-50 font-medium transition-colors">
+                                    Annuller
+                                </button>
+                                <button type="submit" class="flex-1 px-4 py-2 bg-purple-600 hover:bg-purple-700 text-white rounded-lg font-medium transition-colors">
+                                    Gem ændringer
+                                </button>
+                            </div>
+                        </form>
+                    </div>
 
             <!-- Import Users Tab -->
             <div id="import-usersTab" class="tab-content hidden">
