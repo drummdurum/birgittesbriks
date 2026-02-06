@@ -860,8 +860,8 @@ async function handleManualBooking(e) {
         email: formData.get('email') || null,
         ønsket_dato: formData.get('ønsket_dato'),
         ønsket_tid: formData.get('ønsket_tid'),
-        behandling: formData.get('manualBehandling') || 'Kropsterapi',
-        betaling: formData.get('manualBetaling'),
+        behandling: formData.get('behandling') || 'Kropsterapi',
+        betaling: formData.get('betaling'),
         besked: formData.get('besked') || null,
         status: 'confirmed', // Manual bookings are automatically confirmed
         created_by_admin: true
