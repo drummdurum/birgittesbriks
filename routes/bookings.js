@@ -214,7 +214,8 @@ router.post('/', bookingLimiter, bookingValidation, async (req, res) => {
         },
         update: {
           navn: firstName,
-          efternavn: lastName
+          efternavn: lastName,
+          email: email || null
         },
         create: {
           navn: firstName,
