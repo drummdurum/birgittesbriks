@@ -1,78 +1,5 @@
 // Admin Bookings Management
 
-// Fetch availability for a specific date
-async function getAvailabilityForDate(date) {
-    try {
-        const res = await fetch(`/api/availability?date=${encodeURIComponent(date)}`);
-        const data = await res.json();
-        
-        if (!res.ok) {
-            console.warn('Availability fetch error:', data);
-            return null;
-        }
-        
-        return data;
-    } catch (err) {
-        console.error('Error fetching availability:', err);
-        return null;
-    }
-}
-
-// Display availability info for a date (booked and blocked times)
-function showAvailabilityInfo(date) {
-    const container = document.getElementById('availabilityInfo');
-    if (!container) return;
-
-    container.innerHTML = '<div class="text-center py-2"><span class="text-sm text-gray-500">Henter tilgængelighed...</span></div>';
-
-    getAvailabilityForDate(date).then(data => {
-        if (!data) {
-            container.innerHTML = '<div class="text-center py-2"><span class="text-sm text-red-600">Kunne ikke hente tilgængelighed</span></div>';
-            return;
-        }
-
-        if (data.blocked) {
-            container.innerHTML = '<div class="bg-red-50 border border-red-200 rounded p-3"><p class="text-red-700 font-medium">🚫 Hele dagen er blokeret</p></div>';
-            return;
-        }
-
-        const booked = data.bookedTimes || [];
-        const blocked = data.blockedTimes || [];
-        const allTimes = ['09:00', '09:30', '10:00', '10:30', '11:00', '11:30', '12:00', '12:30', '13:00', '13:30', '14:00', '14:30', '15:00', '15:30', '16:00', '16:30', '17:00'];
-
-        let bookedHtml = '';
-        let availableHtml = '';
-
-        allTimes.forEach(time => {
-            if (booked.includes(time)) {
-                bookedHtml += `<span class="inline-block bg-red-100 text-red-800 px-2 py-1 rounded text-sm font-medium">🔴 ${time}</span>`;
-            } else if (blocked.includes(time)) {
-                bookedHtml += `<span class="inline-block bg-blue-100 text-blue-800 px-2 py-1 rounded text-sm font-medium">⏱️ ${time}</span>`;
-            } else {
-                availableHtml += `<span class="inline-block bg-green-100 text-green-800 px-2 py-1 rounded text-sm font-medium">✅ ${time}</span>`;
-            }
-        });
-
-        let html = `
-            <div class="space-y-3">
-                <div>
-                    <p class="text-sm font-medium text-gray-700 mb-2">📅 ${formatDate(date)}</p>
-                </div>
-        `;
-
-        if (availableHtml) {
-            html += `<div><p class="text-xs text-gray-600 mb-1">Ledige tider:</p><div class="flex flex-wrap gap-1">${availableHtml}</div></div>`;
-        }
-
-        if (bookedHtml) {
-            html += `<div><p class="text-xs text-gray-600 mb-1">Optaget/Blokeret:</p><div class="flex flex-wrap gap-1">${bookedHtml}</div></div>`;
-        }
-
-        html += `</div>`;
-        container.innerHTML = html;
-    });
-}
-
 // Load bookings and show clickable days + per-day list
 async function loadBookings() {
     try {
@@ -128,8 +55,6 @@ async function loadBookings() {
                 document.querySelectorAll('#bookingDays .day-btn').forEach(b => b.classList.remove('bg-sage-green', 'text-white'));
                 btn.classList.add('bg-sage-green', 'text-white');
                 renderBookingsForDate(grouped[date], bookingsOfDayEl);
-                // Show availability info for this date
-                showAvailabilityInfo(date);
             });
         });
 
@@ -331,5 +256,106 @@ async function handleManualBooking(e) {
     } catch (error) {
         console.error('Error creating manual booking:', error);
         showNotification('Fejl ved oprettelse af booking', 'error');
+    }
+}
+
+// Fetch availability for a specific date
+async function getAvailabilityForDate(date) {
+    try {
+        const res = await fetch(`/api/availability?date=${encodeURIComponent(date)}`);
+        const data = await res.json();
+        
+        if (!res.ok) {
+            console.warn('Availability fetch error:', data);
+            return null;
+        }
+        
+        return data;
+    } catch (err) {
+        console.error('Error fetching availability:', err);
+        return null;
+    }
+}
+
+// Display availability info for manual booking (shows booked and blocked times)
+function showManualAvailabilityInfo(date) {
+    const container = document.getElementById('manualAvailabilityInfo');
+    const contentDiv = document.getElementById('manualAvailabilityContent');
+    
+    if (!container || !contentDiv) return;
+
+    container.classList.remove('hidden');
+    contentDiv.innerHTML = '<div class="text-sm text-gray-500">🔄 Henter tilgængelighed...</div>';
+
+    getAvailabilityForDate(date).then(data => {
+        if (!data) {
+            contentDiv.innerHTML = '<div class="text-sm text-red-600">❌ Kunne ikke hente tilgængelighed</div>';
+            return;
+        }
+
+        if (data.blocked) {
+            contentDiv.innerHTML = '<div class="text-sm text-red-700 font-medium">🚫 Hele dagen er blokeret</div>';
+            return;
+        }
+
+        const booked = data.bookedTimes || [];
+        const blocked = data.blockedTimes || [];
+        const allTimes = ['10:00', '11:30', '13:00', '14:30', '16:00', '17:30', '19:00'];
+
+        let bookedTimes = [];
+        let availableTimes = [];
+        let blockedTimes = [];
+
+        allTimes.forEach(time => {
+            if (booked.includes(time)) {
+                bookedTimes.push(time);
+            } else if (blocked.includes(time)) {
+                blockedTimes.push(time);
+            } else {
+                availableTimes.push(time);
+            }
+        });
+
+        let html = '';
+
+        if (availableTimes.length > 0) {
+            html += `<div class="flex flex-wrap gap-2">`;
+            availableTimes.forEach(time => {
+                html += `<span class="inline-block bg-green-100 text-green-800 px-2 py-1 rounded text-xs font-medium">✅ ${time}</span>`;
+            });
+            html += `</div>`;
+        }
+
+        if (bookedTimes.length > 0 || blockedTimes.length > 0) {
+            html += `<div class="flex flex-wrap gap-2 mt-2">`;
+            bookedTimes.forEach(time => {
+                html += `<span class="inline-block bg-red-100 text-red-800 px-2 py-1 rounded text-xs font-medium">🔴 ${time} (Optaget)</span>`;
+            });
+            blockedTimes.forEach(time => {
+                html += `<span class="inline-block bg-blue-100 text-blue-800 px-2 py-1 rounded text-xs font-medium">⏱️ ${time} (Blokeret)</span>`;
+            });
+            html += `</div>`;
+        }
+
+        if (availableTimes.length === 0) {
+            html = '<div class="text-sm text-red-600 font-medium">❌ Ingen ledige tider på denne dato</div>';
+        }
+
+        contentDiv.innerHTML = html;
+    });
+}
+
+// Setup manual booking availability listener
+function setupManualAvailabilityListener() {
+    const dateInput = document.getElementById('manualDato');
+    if (dateInput) {
+        dateInput.addEventListener('change', (e) => {
+            const date = e.target.value;
+            if (date) {
+                showManualAvailabilityInfo(date);
+            } else {
+                document.getElementById('manualAvailabilityInfo').classList.add('hidden');
+            }
+        });
     }
 }

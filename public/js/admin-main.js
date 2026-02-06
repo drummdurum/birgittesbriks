@@ -82,6 +82,9 @@ function setupEventListeners() {
     // Manual booking form
     safeAddListener(manualBookingForm, 'submit', handleManualBooking);
     
+    // Setup manual booking availability listener
+    setupManualAvailabilityListener();
+    
     // Import users form
     safeAddListener(importUsersForm, 'submit', handleImportUsers);
     
