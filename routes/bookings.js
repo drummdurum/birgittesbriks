@@ -201,29 +201,31 @@ router.post('/', bookingLimiter, bookingValidation, async (req, res) => {
     // Create or get user
     let user;
     try {
-      const navnParts = navn.split(' ');
-      const firstName = navnParts[0];
-      const lastName = navnParts.slice(1).join(' ');
-      
-      user = await prisma.user.upsert({
-        where: { 
-          email_telefon: {
+      if (prisma.user && typeof prisma.user.upsert === 'function') {
+        const navnParts = navn.split(' ');
+        const firstName = navnParts[0];
+        const lastName = navnParts.slice(1).join(' ');
+
+        user = await prisma.user.upsert({
+          where: {
+            email_telefon: {
+              email: email || null,
+              telefon: telefon
+            }
+          },
+          update: {
+            navn: firstName,
+            efternavn: lastName,
+            email: email || null
+          },
+          create: {
+            navn: firstName,
+            efternavn: lastName,
             email: email || null,
-            telefon: telefon
+            telefon
           }
-        },
-        update: {
-          navn: firstName,
-          efternavn: lastName,
-          email: email || null
-        },
-        create: {
-          navn: firstName,
-          efternavn: lastName,
-          email: email || null,
-          telefon
-        }
-      });
+        });
+      }
     } catch (userErr) {
       console.error('User creation/update error:', userErr);
       // Continue without user ID if user creation fails

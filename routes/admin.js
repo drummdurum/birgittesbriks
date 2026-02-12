@@ -4,6 +4,37 @@ const { prisma } = require('../database/prisma');
 const { sendBookingFinalConfirmation, sendBookingCancellation } = require('../utils/email');
 const router = express.Router();
 
+const isDbUnavailableError = (error) => {
+    const code = error?.code;
+    const message = String(error?.message || '').toLowerCase();
+
+    return (
+        code === 'P1001' ||
+        code === 'P1002' ||
+        code === 'ETIMEDOUT' ||
+        code === 'ECONNREFUSED' ||
+        message.includes("can't reach database server") ||
+        message.includes('connection') && message.includes('timed out')
+    );
+};
+
+const modelMissing = (modelKey) => !prisma || !prisma[modelKey];
+
+const sendDbError = (res, fallbackMessage, error) => {
+    if (isDbUnavailableError(error)) {
+        return res.status(503).json({
+            success: false,
+            message: 'Databasen er midlertidigt utilgængelig. Prøv igen om lidt.'
+        });
+    }
+
+    return res.status(500).json({
+        success: false,
+        message: fallbackMessage,
+        error: process.env.NODE_ENV === 'development' ? error?.message : undefined
+    });
+};
+
 // Middleware to check if user is authenticated as admin
 const requireAdmin = (req, res, next) => {
     if (!req.session || !req.session.isAdmin) {
@@ -83,6 +114,13 @@ router.get('/auth-status', (req, res) => {
 // Get all bookings
 router.get('/bookings', requireAdmin, async (req, res) => {
     try {
+        if (modelMissing('booking')) {
+            return res.status(503).json({
+                success: false,
+                message: 'Booking-data er ikke tilgængelig. Kør database migration og deploy igen.'
+            });
+        }
+
         const bookings = await prisma.booking.findMany({
             orderBy: { created_at: 'desc' }
         });
@@ -108,11 +146,7 @@ router.get('/bookings', requireAdmin, async (req, res) => {
             code: error.code,
             stack: error.stack
         });
-        res.status(500).json({ 
-            success: false, 
-            message: 'Fejl ved hentning af bookinger',
-            error: process.env.NODE_ENV === 'development' ? error.message : undefined
-        });
+        return sendDbError(res, 'Fejl ved hentning af bookinger', error);
     }
 });
 
@@ -352,6 +386,11 @@ router.post('/bookings/:id/send-final', requireAdmin, async (req, res) => {
 // Get blocked dates
 router.get('/blocked-dates', requireAdmin, async (req, res) => {
     try {
+        if (modelMissing('blockedDate')) {
+            console.warn('blockedDate model missing on prisma client - returning empty list');
+            return res.json([]);
+        }
+
         const blockedDates = await prisma.blockedDate.findMany({
             orderBy: { start_date: 'asc' }
         });
@@ -377,11 +416,7 @@ router.get('/blocked-dates', requireAdmin, async (req, res) => {
             code: error.code,
             stack: error.stack
         });
-        res.status(500).json({ 
-            success: false, 
-            message: 'Fejl ved hentning af blokerede datoer',
-            error: process.env.NODE_ENV === 'development' ? error.message : undefined
-        });
+        return sendDbError(res, 'Fejl ved hentning af blokerede datoer', error);
     }
 });
 
@@ -495,6 +530,11 @@ router.delete('/blocked-dates/:id', requireAdmin, async (req, res) => {
 // Get blocked times
 router.get('/blocked-times', requireAdmin, async (req, res) => {
     try {
+        if (modelMissing('blockedTime')) {
+            console.warn('blockedTime model missing on prisma client - returning empty list');
+            return res.json([]);
+        }
+
         const blockedTimes = await prisma.blockedTime.findMany({
             orderBy: [{ date: 'asc' }, { time: 'asc' }]
         });
@@ -513,10 +553,7 @@ router.get('/blocked-times', requireAdmin, async (req, res) => {
         res.json(serialized);
     } catch (error) {
         console.error('Error fetching blocked times:', error);
-        res.status(500).json({
-            success: false,
-            message: 'Fejl ved hentning af blokerede tidspunkter'
-        });
+        return sendDbError(res, 'Fejl ved hentning af blokerede tidspunkter', error);
     }
 });
 
@@ -700,6 +737,11 @@ router.post('/import-users', requireAdmin, async (req, res) => {
 // Get all users
 router.get('/users', requireAdmin, async (req, res) => {
     try {
+        if (modelMissing('user')) {
+            console.warn('user model missing on prisma client - returning empty users list');
+            return res.json({ success: true, users: [] });
+        }
+
         const users = await prisma.user.findMany({
             orderBy: [{ navn: 'asc' }, { efternavn: 'asc' }]
         });
@@ -710,10 +752,7 @@ router.get('/users', requireAdmin, async (req, res) => {
         });
     } catch (error) {
         console.error('Get users error:', error);
-        res.status(500).json({
-            success: false,
-            message: 'Fejl ved hentning af brugere'
-        });
+        return sendDbError(res, 'Fejl ved hentning af brugere', error);
     }
 });
 
