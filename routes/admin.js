@@ -6,7 +6,7 @@ const router = express.Router();
 
 // Middleware to check if user is authenticated as admin
 const requireAdmin = (req, res, next) => {
-    if (!req.session.isAdmin) {
+    if (!req.session || !req.session.isAdmin) {
         return res.status(401).json({ success: false, message: 'Adgang nægtet' });
     }
     next();
@@ -25,10 +25,20 @@ router.post('/login', async (req, res) => {
         if (username === adminUsername && password === adminPassword) {
             req.session.isAdmin = true;
             req.session.adminUser = { username };
-            
-            res.json({ 
-                success: true, 
-                user: { username } 
+
+            return req.session.save((sessionError) => {
+                if (sessionError) {
+                    console.error('Admin login session save error:', sessionError);
+                    return res.status(503).json({
+                        success: false,
+                        message: 'Login midlertidigt utilgængeligt. Prøv igen om lidt.'
+                    });
+                }
+
+                res.json({
+                    success: true,
+                    user: { username }
+                });
             });
         } else {
             res.status(401).json({ 
@@ -47,9 +57,19 @@ router.post('/login', async (req, res) => {
 
 // Admin logout
 router.post('/logout', (req, res) => {
-    req.session.isAdmin = false;
-    req.session.adminUser = null;
-    res.json({ success: true });
+    if (!req.session) {
+        return res.json({ success: true });
+    }
+
+    req.session.destroy((error) => {
+        if (error) {
+            console.error('Admin logout session destroy error:', error);
+            return res.status(500).json({ success: false, message: 'Kunne ikke logge ud' });
+        }
+
+        res.clearCookie('connect.sid');
+        res.json({ success: true });
+    });
 });
 
 // Check authentication status

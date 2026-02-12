@@ -15,6 +15,7 @@ const pagesRouter = require('./routes/pages');
 
 const app = express();
 const PORT = process.env.PORT || 3000;
+const sessionStoreType = (process.env.SESSION_STORE || 'memory').toLowerCase();
 
 // Security middleware
 app.use(helmet({
@@ -54,11 +55,27 @@ app.use(express.json({ limit: '10mb' }));
 app.use(express.urlencoded({ extended: true, limit: '10mb' }));
 
 // Session middleware
-app.use(session({
-  store: new pgSession({
-    pool: pool,
+let sessionStore;
+
+if (sessionStoreType === 'postgres') {
+  const pgStore = new pgSession({
+    pool,
     tableName: 'session'
-  }),
+  });
+
+  pgStore.on('error', (error) => {
+    console.error('Session store error (PostgreSQL):', error.message);
+  });
+
+  sessionStore = pgStore;
+  console.log('🗄️ Session store: PostgreSQL');
+} else {
+  sessionStore = new session.MemoryStore();
+  console.warn('⚠️ Session store: MemoryStore (ikke persistent mellem restarts)');
+}
+
+app.use(session({
+  store: sessionStore,
   secret: process.env.SESSION_SECRET || 'your-secret-key',
   resave: false,
   saveUninitialized: false,
@@ -124,6 +141,11 @@ app.use('*', (req, res) => {
 // Error handling middleware
 app.use((err, req, res, next) => {
     console.error('Server error:', err.stack);
+
+  if (res.headersSent) {
+    return next(err);
+  }
+
     res.status(500).json({
         error: 'Der opstod en intern serverfejl. Prøv igen senere.'
     });
