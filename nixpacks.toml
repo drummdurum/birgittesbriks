@@ -1,7 +1,9 @@
 [phases.build]
 cmds = [
-  "npm ci --only=production --ignore-scripts",
-  "npm run build-css"
+  "npm ci --include=dev --ignore-scripts",
+  "npm run build-css",
+  "npm test",
+  "npm prune --omit=dev"
 ]
 
 [phases.start]
