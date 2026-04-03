@@ -49,8 +49,11 @@
     </header>
 
     <main class="mt-20">
-        <section class="py-20 md:py-24 min-h-[420px] flex items-center bg-center bg-cover" style="background-image: linear-gradient(rgba(0, 0, 0, 0.35), rgba(0, 0, 0, 0.35)), url('/images/hero-sunset.jpg');">
-            <div class="container-custom">
+        <div class="relative overflow-hidden" style="min-height: 420px;">
+            <img src="/images/hero-sunset.jpg" alt="" class="absolute top-0 left-0 w-full h-full object-cover" aria-hidden="true">
+            <div class="absolute top-0 left-0 w-full h-full" style="background: rgba(0, 0, 0, 0.35);" aria-hidden="true"></div>
+
+            <div class="container-custom relative" style="min-height: 420px; display: flex; align-items: center;">
                 <div class="max-w-4xl mx-auto text-center px-6 py-10 md:px-10 md:py-12">
                     <p class="text-sage-green text-lg italic mb-4">Mød Birgitte</p>
                     <h1 class="text-4xl md:text-5xl font-light text-white mb-4">Lidt om mig</h1>
@@ -58,7 +61,7 @@
                     <p class="text-white opacity-80 max-w-3xl mx-auto">Jeg arbejder med et helhedsorienteret syn på mennesket, hvor krop og psyke hænger tæt sammen.</p>
                 </div>
             </div>
-        </section>
+        </div>
 
         <section class="section-padding bg-light-gray">
             <div class="container-custom">
@@ -90,7 +93,9 @@
                         
                         <p>Dette inspirerede mig til at tage kropsterapeut uddannelsen, da jeg hele tiden arbejder på at dygtiggøre mig. 
                             <br> 
-                            Jeg bruger elementer fra flere former for kropsterapi og massage.</p>
+                            Jeg bruger elementer fra flere former for kropsterapi, samtale terapi og massage.</p>
+                            <br>
+                        <p>Jeg har min egen stil og tilgang.
                         <br>
                         <p>Selv små ændringer kan gøre en stor forskel.</p>
                         
