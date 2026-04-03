@@ -13,6 +13,11 @@ router.get('/booking', (req, res) => {
     res.sendFile(path.join(__dirname, '..', 'public', 'booking.html'));
 });
 
+// About page
+router.get('/om', (req, res) => {
+    res.sendFile(path.join(__dirname, '..', 'public', 'om.html'));
+});
+
 // Booking confirmation (uses booking page)
 router.get('/booking-confirmation', (req, res) => {
     res.sendFile(path.join(__dirname, '..', 'public', 'booking.html'));
