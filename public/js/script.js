@@ -22,6 +22,11 @@ document.addEventListener('DOMContentLoaded', function() {
     
     // Get all navigation links
     const navLinks = document.querySelectorAll('.nav-link');
+
+    const pricingYear = document.getElementById('pricing-year');
+    if (pricingYear) {
+        pricingYear.textContent = new Date().getFullYear();
+    }
     
     navLinks.forEach(link => {
         link.addEventListener('click', function(e) {
