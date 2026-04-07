@@ -7,7 +7,7 @@ cmds = [
 ]
 
 [phases.start]
-cmd = "npm start"
+cmd = "npm run start:with-migrate"
 
 [variables]
 NODE_ENV = "production"
