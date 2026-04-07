@@ -5,7 +5,7 @@
   "main": "server.js",
   "scripts": {
     "postinstall": "prisma generate",
-    "start": "node server.js",
+    "start": "prisma migrate deploy && node server.js",
     "dev": "nodemon server.js",
     "build-css": "npx tailwindcss -i ./src/input.css -o ./public/css/style.css",
     "watch-css": "npx tailwindcss -i ./src/input.css -o ./public/css/style.css --watch",
