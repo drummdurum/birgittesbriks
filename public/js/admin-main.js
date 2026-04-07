@@ -42,9 +42,14 @@ function setupEventListeners() {
     const multipleDatePicker = document.getElementById('multipleDatePicker');
     const blockTimeForm = document.getElementById('blockTimeForm');
     const manualBookingForm = document.getElementById('manualBookingForm');
+    const createUserForm = document.getElementById('createUserForm');
     const importUsersForm = document.getElementById('importUsersForm');
     const userSearch = document.getElementById('userSearch');
     const blockStartDate = document.getElementById('blockStartDate');
+    const setTodayBtn = document.getElementById('setTodayBtn');
+    const showAvailabilityBtn = document.getElementById('showAvailabilityBtn');
+    const goToCreateUserBtn = document.getElementById('goToCreateUserBtn');
+    const manualEntryTabBtns = document.querySelectorAll('.manual-entry-tab-btn');
 
     const safeAddListener = (el, event, handler) => {
         if (el) {
@@ -81,6 +86,37 @@ function setupEventListeners() {
     
     // Manual booking form
     safeAddListener(manualBookingForm, 'submit', handleManualBooking);
+    safeAddListener(createUserForm, 'submit', handleCreateUser);
+
+    manualEntryTabBtns.forEach(btn => {
+        safeAddListener(btn, 'click', () => switchManualEntryTab(btn.dataset.manualTab));
+    });
+
+    safeAddListener(setTodayBtn, 'click', () => {
+        const manualDato = document.getElementById('manualDato');
+        if (!manualDato) return;
+
+        const today = new Date().toISOString().split('T')[0];
+        manualDato.value = today;
+        manualDato.dispatchEvent(new Event('change'));
+    });
+
+    safeAddListener(showAvailabilityBtn, 'click', () => {
+        const availabilityInfo = document.getElementById('manualAvailabilityInfo');
+        const manualDato = document.getElementById('manualDato');
+
+        if (!manualDato || !manualDato.value) {
+            showNotification('Vælg først en dato', 'error');
+            return;
+        }
+
+        if (availabilityInfo) {
+            availabilityInfo.classList.remove('hidden');
+            availabilityInfo.scrollIntoView({ behavior: 'smooth', block: 'center' });
+        }
+    });
+
+    safeAddListener(goToCreateUserBtn, 'click', () => switchManualEntryTab('user'));
     
     // Setup manual booking availability listener
     setupManualAvailabilityListener();
@@ -97,9 +133,24 @@ function setupEventListeners() {
     safeAddListener(usersSearchInput, 'input', handleUsersSearch);
     
     // Close modal when clicking outside
-    document.getElementById('editUserModal').addEventListener('click', function(e) {
+    const editUserModal = document.getElementById('editUserModal');
+    safeAddListener(editUserModal, 'click', function(e) {
         if (e.target === this) {
             closeEditUserModal();
+        }
+    });
+
+    const manualUserHistoryModal = document.getElementById('manualUserHistoryModal');
+    safeAddListener(manualUserHistoryModal, 'click', function(e) {
+        if (e.target === this) {
+            closeManualUserHistoryModal();
+        }
+    });
+
+    const manualBookingNoteModal = document.getElementById('manualBookingNoteModal');
+    safeAddListener(manualBookingNoteModal, 'click', function(e) {
+        if (e.target === this) {
+            closeManualBookingNoteModal();
         }
     });
     
@@ -107,12 +158,18 @@ function setupEventListeners() {
     safeAddListener(userSearch, 'input', handleUserSearch);
     safeAddListener(userSearch, 'focus', function() {
         if (this.value.length >= 2) {
-            document.getElementById('userSearchResults').classList.remove('hidden');
+            const userSearchResults = document.getElementById('userSearchResults');
+            if (userSearchResults) {
+                userSearchResults.classList.remove('hidden');
+            }
         }
     });
     document.addEventListener('click', function(e) {
         if (!e.target.matches('#userSearch') && !e.target.closest('#userSearchResults')) {
-            document.getElementById('userSearchResults').classList.add('hidden');
+            const userSearchResults = document.getElementById('userSearchResults');
+            if (userSearchResults) {
+                userSearchResults.classList.add('hidden');
+            }
         }
     });
     
@@ -126,6 +183,20 @@ function setupEventListeners() {
     
     // Event delegation for booking action buttons
     document.addEventListener('click', function(e) {
+        const blockedViewBtn = e.target.closest('.blocked-view-btn');
+        if (blockedViewBtn) {
+            const viewId = blockedViewBtn.dataset.view;
+            if (viewId) {
+                showBlockedDatesView(viewId);
+            }
+            return;
+        }
+
+        if (e.target.closest('.blocked-back-btn')) {
+            showBlockedDatesMenu();
+            return;
+        }
+
         if (e.target.classList.contains('booking-action-btn')) {
             const action = e.target.dataset.action;
             const bookingId = e.target.dataset.bookingId;
@@ -138,6 +209,10 @@ function setupEventListeners() {
                 if (confirm('Markér denne booking som færdig?')) {
                     updateBookingStatus(bookingId, 'completed');
                 }
+            } else if (action === 'save-note') {
+                const noteEl = document.getElementById(`note-${bookingId}`);
+                const noteText = noteEl ? noteEl.value : '';
+                updateBookingNote(bookingId, noteText);
             }
         }
         

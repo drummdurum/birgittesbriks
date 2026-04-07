@@ -16,6 +16,7 @@ const pagesRouter = require('./routes/pages');
 const app = express();
 const PORT = process.env.PORT || 3000;
 const sessionStoreType = (process.env.SESSION_STORE || 'memory').toLowerCase();
+const isProduction = process.env.NODE_ENV === 'production';
 
 // Security middleware
 app.use(helmet({
@@ -39,16 +40,27 @@ app.use(cors({
 }));
 
 // Trust proxy for Railway deployment
-if (process.env.NODE_ENV === 'production') {
+if (isProduction) {
   app.set('trust proxy', 1);
 }
 
-// Rate limiting
-const limiter = rateLimit({
-  windowMs: 15 * 60 * 1000, // 15 minutes
-  max: 100 // limit each IP to 100 requests per windowMs
-});
-app.use(limiter);
+// Rate limiting (only for API routes in production)
+if (isProduction) {
+  const apiLimiter = rateLimit({
+    windowMs: 15 * 60 * 1000, // 15 minutes
+    max: parseInt(process.env.RATE_LIMIT_MAX_REQUESTS, 10) || 300,
+    message: {
+      success: false,
+      message: 'For mange requests, prøv igen senere.'
+    },
+    standardHeaders: true,
+    legacyHeaders: false
+  });
+
+  app.use('/api', apiLimiter);
+} else {
+  console.log('🧪 Development mode: global API rate limit disabled');
+}
 
 // Body parsing middleware
 app.use(express.json({ limit: '10mb' }));

@@ -11,11 +11,7 @@ async function checkAuthStatus() {
         if (data.authenticated) {
             currentUser = data.user;
             showDashboard();
-            loadBookings();
-            loadBlockedDates();
-            loadBlockedTimes();
-            loadCompletedBookings();
-            loadAllUsers();
+            switchTab(getInitialAdminTabFromPath());
         } else {
             showLogin();
         }
@@ -50,10 +46,7 @@ async function handleLogin(e) {
         if (data.success) {
             currentUser = data.user;
             showDashboard();
-            loadBookings();
-            loadBlockedDates();
-            loadCompletedBookings();
-            loadAllUsers();
+            switchTab(getInitialAdminTabFromPath());
             loginForm.reset();
             hideError();
         } else {

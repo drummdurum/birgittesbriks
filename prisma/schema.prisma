@@ -35,7 +35,7 @@ model Booking {
   ønsket_tid        String?   @db.VarChar(20)
   behandling        String    @default("Kropsterapi") @db.VarChar(50)
   betaling          String    @default("Enkelt behandling") @db.VarChar(100)
-  besked            String?
+  besked            String    @default("")
   status            String    @default("pending") @db.VarChar(20)
   completed         Boolean   @default(false)
   gdpr_samtykke     Boolean   @default(false)

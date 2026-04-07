@@ -40,7 +40,7 @@ async function loadBlockedTimes() {
                     </div>
                 </div>
                 <button data-action="remove-blocked-time" data-blocked-id="${blocked.id}" 
-                        class="blocked-time-action-btn bg-blue-600 hover:bg-blue-700 text-white px-3 py-2 rounded-lg text-sm font-medium transition-colors flex items-center gap-1">
+                        class="blocked-time-action-btn bg-blue-700 hover:bg-blue-800 text-white px-3 py-2 rounded-lg text-sm font-medium transition-colors flex items-center gap-1 shadow-sm border border-blue-800">
                     🗑️ Fjern
                 </button>
             </div>

@@ -231,7 +231,7 @@ router.post('/bookings', requireAdmin, async (req, res) => {
                 ønsket_tid,
                 behandling,
                 betaling,
-                besked: besked || null,
+                besked: typeof besked === 'string' ? besked.trim() : '',
                 status,
                 created_by_admin: true
             }
@@ -340,6 +340,53 @@ router.put('/bookings/:id/status', requireAdmin, async (req, res) => {
         res.status(500).json({
             success: false,
             message: 'Fejl ved opdatering af booking'
+        });
+    }
+});
+
+// Update booking note (besked)
+router.put('/bookings/:id/note', requireAdmin, async (req, res) => {
+    try {
+        const { id } = req.params;
+        const besked = req.body?.besked ?? req.body?.note;
+
+        if (typeof besked !== 'string') {
+            return res.status(400).json({
+                success: false,
+                message: 'Note skal være tekst'
+            });
+        }
+
+        const trimmed = besked.trim();
+
+        if (trimmed.length > 2000) {
+            return res.status(400).json({
+                success: false,
+                message: 'Note må maks være 2000 tegn'
+            });
+        }
+
+        const updated = await prisma.booking.update({
+            where: { id: parseInt(id) },
+            data: { besked: trimmed }
+        });
+
+        if (!updated) {
+            return res.status(404).json({
+                success: false,
+                message: 'Booking ikke fundet'
+            });
+        }
+
+        return res.json({
+            success: true,
+            message: 'Note opdateret'
+        });
+    } catch (error) {
+        console.error('Error updating booking note:', error);
+        return res.status(500).json({
+            success: false,
+            message: 'Fejl ved opdatering af note'
         });
     }
 });
@@ -756,6 +803,69 @@ router.get('/users', requireAdmin, async (req, res) => {
     }
 });
 
+// Create single user
+router.post('/users', requireAdmin, async (req, res) => {
+    try {
+        if (modelMissing('user')) {
+            return res.status(503).json({
+                success: false,
+                message: 'Bruger-data er ikke tilgængelig. Kør database migration og deploy igen.'
+            });
+        }
+
+        const { navn, efternavn, telefon, email } = req.body;
+
+        if (!navn || !efternavn || !telefon) {
+            return res.status(400).json({
+                success: false,
+                message: 'Fornavn, efternavn og telefon er påkrævet'
+            });
+        }
+
+        const existingByPhone = await prisma.user.findFirst({
+            where: { telefon }
+        });
+
+        if (existingByPhone) {
+            return res.status(409).json({
+                success: false,
+                message: 'En bruger med dette telefonnummer findes allerede'
+            });
+        }
+
+        if (email) {
+            const existingByEmail = await prisma.user.findFirst({
+                where: { email }
+            });
+
+            if (existingByEmail) {
+                return res.status(409).json({
+                    success: false,
+                    message: 'En bruger med denne email findes allerede'
+                });
+            }
+        }
+
+        const user = await prisma.user.create({
+            data: {
+                navn: navn.trim(),
+                efternavn: efternavn.trim(),
+                telefon: telefon.trim(),
+                email: email ? email.trim() : null
+            }
+        });
+
+        res.status(201).json({
+            success: true,
+            user,
+            message: 'Bruger oprettet'
+        });
+    } catch (error) {
+        console.error('Create user error:', error);
+        return sendDbError(res, 'Fejl ved oprettelse af bruger', error);
+    }
+});
+
 // Update user
 router.put('/users/:id', requireAdmin, async (req, res) => {
     try {
@@ -798,6 +908,40 @@ router.put('/users/:id', requireAdmin, async (req, res) => {
             success: false,
             message: 'Fejl ved opdatering af bruger'
         });
+    }
+});
+
+// Delete user
+router.delete('/users/:id', requireAdmin, async (req, res) => {
+    try {
+        const userId = parseInt(req.params.id, 10);
+
+        if (!Number.isInteger(userId)) {
+            return res.status(400).json({
+                success: false,
+                message: 'Ugyldigt bruger-id'
+            });
+        }
+
+        await prisma.user.delete({
+            where: { id: userId }
+        });
+
+        return res.json({
+            success: true,
+            message: 'Bruger slettet'
+        });
+    } catch (error) {
+        console.error('Delete user error:', error);
+
+        if (error.code === 'P2025') {
+            return res.status(404).json({
+                success: false,
+                message: 'Bruger ikke fundet'
+            });
+        }
+
+        return sendDbError(res, 'Fejl ved sletning af bruger', error);
     }
 });
 

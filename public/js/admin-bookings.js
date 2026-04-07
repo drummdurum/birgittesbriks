@@ -1,5 +1,14 @@
 // Admin Bookings Management
 
+function escapeHtml(value) {
+    return String(value || '')
+        .replace(/&/g, '&amp;')
+        .replace(/</g, '&lt;')
+        .replace(/>/g, '&gt;')
+        .replace(/"/g, '&quot;')
+        .replace(/'/g, '&#39;');
+}
+
 // Load bookings and show clickable days + per-day list
 async function loadBookings() {
     try {
@@ -87,6 +96,11 @@ function renderBookingsForDate(bookingsForDate, containerEl) {
                 <div>💆‍♀️ ${booking.behandling || 'Kropsterapi'} - ${booking.betaling}</div>
                 ${booking.besked ? `<div class="mt-2">💬 ${booking.besked}</div>` : ''}
             </div>
+            <div class="mb-3 p-3 bg-gray-50 border border-gray-200 rounded-lg">
+                <label for="note-${booking.id}" class="block text-xs font-medium text-gray-700 mb-2">Noter</label>
+                <textarea id="note-${booking.id}" rows="2" class="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent">${escapeHtml(booking.besked || '')}</textarea>
+                <button data-action="save-note" data-booking-id="${booking.id}" class="booking-action-btn mt-2 bg-slate-700 hover:bg-slate-800 text-white px-3 py-2 rounded-lg text-xs font-medium transition-colors">💾 Gem note</button>
+            </div>
             <div class="flex gap-3 pt-2 border-t border-gray-100">
                 ${booking.status !== 'confirmed' ? `<button data-action="confirm" data-booking-id="${booking.id}" class="booking-action-btn flex-1 bg-green-600 hover:bg-green-700 text-white px-3 py-2 rounded-lg text-sm font-medium">✅ Bekræft</button>` : ''}
                 ${booking.status !== 'cancelled' ? `<button data-action="cancel" data-booking-id="${booking.id}" class="booking-action-btn flex-1 bg-red-600 hover:bg-red-700 text-white px-3 py-2 rounded-lg text-sm font-medium">❌ Annuller</button>` : ''}
@@ -94,6 +108,37 @@ function renderBookingsForDate(bookingsForDate, containerEl) {
             </div>
         </div>
     `).join('');
+}
+
+async function updateBookingNote(bookingId, noteText) {
+    try {
+        const response = await fetch(`/api/admin/bookings/${bookingId}/note`, {
+            method: 'PUT',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({ besked: noteText })
+        });
+
+        const result = await response.json();
+
+        if (!result.success) {
+            showNotification(result.message || 'Fejl ved opdatering af note', 'error');
+            return;
+        }
+
+        showNotification('Note gemt', 'success');
+        loadBookings();
+        loadCompletedBookings();
+        loadCancelledBookings();
+
+        if (typeof loadManualUserBookingHistory === 'function') {
+            loadManualUserBookingHistory();
+        }
+    } catch (error) {
+        console.error('Error updating booking note:', error);
+        showNotification('Fejl ved opdatering af note', 'error');
+    }
 }
 
 // Update booking status
@@ -220,6 +265,8 @@ async function handleManualBooking(e) {
     e.preventDefault();
     
     const formData = new FormData(e.target);
+    const selectedUser = typeof getSelectedManualUser === 'function' ? getSelectedManualUser() : null;
+
     const bookingData = {
         navn: formData.get('navn'),
         telefon: formData.get('telefon'),
@@ -228,10 +275,33 @@ async function handleManualBooking(e) {
         ønsket_tid: formData.get('ønsket_tid'),
         behandling: formData.get('behandling') || 'Kropsterapi',
         betaling: formData.get('betaling'),
-        besked: formData.get('besked') || null,
+        besked: formData.get('besked') || '',
         status: 'confirmed', // Manual bookings are automatically confirmed
         created_by_admin: true
     };
+
+    if (selectedUser) {
+        const selectedName = `${selectedUser.navn} ${selectedUser.efternavn || ''}`.trim();
+        const selectedPhone = (selectedUser.telefon || '').trim();
+        const selectedEmail = (selectedUser.email || '').trim().toLowerCase();
+
+        const enteredName = String(bookingData.navn || '').trim();
+        const enteredPhone = String(bookingData.telefon || '').trim();
+        const enteredEmail = String(bookingData.email || '').trim().toLowerCase();
+
+        if (enteredName !== selectedName || enteredPhone !== selectedPhone || enteredEmail !== selectedEmail) {
+            showNotification('Du kan ikke ændre brugeroplysninger for valgt eksisterende bruger', 'error');
+            bookingData.navn = selectedName;
+            bookingData.telefon = selectedPhone;
+            bookingData.email = selectedUser.email || null;
+            return;
+        }
+
+        // Enforce selected user identity values server-side payload side as well.
+        bookingData.navn = selectedName;
+        bookingData.telefon = selectedPhone;
+        bookingData.email = selectedUser.email || null;
+    }
     
     try {
         const response = await fetch('/api/admin/bookings', {

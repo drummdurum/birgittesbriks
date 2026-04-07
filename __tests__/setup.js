@@ -24,6 +24,14 @@ jest.mock('../database/prisma', () => ({
       findFirst: jest.fn(),
       create: jest.fn(),
       delete: jest.fn()
+    },
+    user: {
+      findMany: jest.fn(),
+      findFirst: jest.fn(),
+      findUnique: jest.fn(),
+      create: jest.fn(),
+      update: jest.fn(),
+      delete: jest.fn()
     }
   },
   pool: {},
@@ -33,7 +41,8 @@ jest.mock('../database/prisma', () => ({
 jest.mock('../utils/email', () => ({
   sendBookingConfirmation: jest.fn().mockResolvedValue(true),
   sendBookingNotification: jest.fn().mockResolvedValue(true),
-  sendBookingFinalConfirmation: jest.fn().mockResolvedValue(true)
+  sendBookingFinalConfirmation: jest.fn().mockResolvedValue(true),
+  sendBookingCancellation: jest.fn().mockResolvedValue(true)
 }));
 
 // Mock express-rate-limit to disable it for testing

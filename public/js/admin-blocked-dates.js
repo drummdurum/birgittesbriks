@@ -43,7 +43,7 @@ async function loadBlockedDates() {
                     </div>
                 </div>
                 <button data-action="remove-blocked" data-blocked-id="${blocked.id}" 
-                        class="blocked-action-btn bg-red-600 hover:bg-red-700 text-white px-3 py-2 rounded-lg text-sm font-medium transition-colors flex items-center gap-1">
+                        class="blocked-action-btn bg-red-700 hover:bg-red-800 text-white px-3 py-2 rounded-lg text-sm font-medium transition-colors flex items-center gap-1 shadow-sm border border-red-800">
                     🗑️ Fjern
                 </button>
             </div>
@@ -154,7 +154,7 @@ function renderSelectedDates() {
     container.innerHTML = selectedDates.map(date => `
         <span class="inline-flex items-center gap-2 bg-orange-100 text-orange-800 px-3 py-1 rounded-full text-sm">
             ${formatDate(date)}
-            <button type="button" onclick="removeDateFromList('${date}')" class="hover:text-orange-600 font-bold">×</button>
+            <button type="button" onclick="removeDateFromList('${date}')" class="inline-flex items-center justify-center w-5 h-5 rounded-full bg-orange-600 hover:bg-orange-700 text-white text-xs font-bold transition-colors">×</button>
         </span>
     `).join('');
 }

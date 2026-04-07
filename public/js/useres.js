@@ -381,11 +381,51 @@ function renderUsersList() {
                     ${user.email ? `<span class="ml-2">✉️ ${user.email}</span>` : ''}
                 </div>
             </div>
-            <button type="button" onclick="openEditUserModal(${user.id})" class="px-4 py-2 bg-purple-600 hover:bg-purple-700 text-white rounded-lg text-sm font-medium transition-colors">
-                ✏️ Rediger
-            </button>
+            <div class="flex gap-2">
+                <button type="button" onclick="openEditUserModal(${user.id})" class="px-4 py-2 bg-purple-600 hover:bg-purple-700 text-white rounded-lg text-sm font-medium transition-colors">
+                    ✏️ Rediger
+                </button>
+                <button type="button" onclick="deleteUser(${user.id})" class="px-4 py-2 bg-red-600 hover:bg-red-700 text-white rounded-lg text-sm font-medium transition-colors">
+                    🗑️ Slet
+                </button>
+            </div>
         </div>
     `).join('');
+}
+
+async function deleteUser(userId) {
+    const user = allUsers.find(u => u.id === userId);
+    const displayName = user ? `${user.navn} ${user.efternavn || ''}`.trim() : `#${userId}`;
+
+    if (!confirm(`Vil du slette bruger ${displayName}?`)) {
+        return;
+    }
+
+    try {
+        const response = await fetch(`/api/admin/users/${userId}`, {
+            method: 'DELETE'
+        });
+
+        const result = await response.json();
+
+        if (!result.success) {
+            showNotification(result.message || 'Fejl ved sletning af bruger', 'error');
+            return;
+        }
+
+        if (selectedManualUser && selectedManualUser.id === userId) {
+            selectedManualUser = null;
+            renderSelectedManualUser();
+            loadManualUserBookingHistory();
+            setManualIdentityLocked(false);
+        }
+
+        showNotification('Bruger slettet', 'success');
+        loadAllUsers();
+    } catch (error) {
+        console.error('Error deleting user:', error);
+        showNotification('Fejl ved sletning af bruger', 'error');
+    }
 }
 
 // Open edit user modal

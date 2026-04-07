@@ -58,6 +58,54 @@ function showNotification(message, type = 'success') {
     }, 3000);
 }
 
+// Blocked dates subview navigation
+function showBlockedDatesMenu() {
+    const menu = document.getElementById('blockedDatesMenu');
+    const views = document.querySelectorAll('.blocked-view');
+
+    if (menu) {
+        menu.classList.remove('hidden');
+    }
+
+    views.forEach(view => {
+        view.classList.add('hidden');
+    });
+}
+
+function showBlockedDatesView(viewId) {
+    const menu = document.getElementById('blockedDatesMenu');
+    const views = document.querySelectorAll('.blocked-view');
+    const targetView = document.getElementById(viewId);
+
+    if (!targetView) {
+        return;
+    }
+
+    if (menu) {
+        menu.classList.add('hidden');
+    }
+
+    views.forEach(view => {
+        if (view.id === viewId) {
+            view.classList.remove('hidden');
+        } else {
+            view.classList.add('hidden');
+        }
+    });
+}
+
+function getInitialAdminTabFromPath() {
+    const pathname = window.location.pathname;
+
+    if (pathname.endsWith('/admin/blocked')) return 'blocked-dates';
+    if (pathname.endsWith('/admin/manual')) return 'manual-booking';
+    if (pathname.endsWith('/admin/import')) return 'import-users';
+    if (pathname.endsWith('/admin/cancelled')) return 'cancelled';
+    if (pathname.endsWith('/admin/completed')) return 'completed';
+
+    return 'bookings';
+}
+
 // Switch tabs
 function switchTab(tabName) {
     const tabBtns = document.querySelectorAll('.tab-btn');
@@ -87,6 +135,7 @@ function switchTab(tabName) {
     if (tabName === 'bookings') {
         loadBookings();
     } else if (tabName === 'blocked-dates') {
+        showBlockedDatesMenu();
         loadBlockedDates();
         loadBlockedTimes();
     } else if (tabName === 'completed') {
@@ -95,6 +144,15 @@ function switchTab(tabName) {
         loadCancelledBookings();
     } else if (tabName === 'manual-booking') {
         loadAllUsers();
+        if (typeof switchManualEntryTab === 'function') {
+            switchManualEntryTab('booking');
+        }
+        if (typeof renderSelectedManualUser === 'function') {
+            renderSelectedManualUser();
+        }
+        if (typeof loadManualUserBookingHistory === 'function') {
+            loadManualUserBookingHistory();
+        }
     }
 }
 
